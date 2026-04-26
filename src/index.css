@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Photography Event Manager — Dark + Gold design system */
+
+@layer base {
+  :root {
+    /* Dark luxe palette */
+    --background: 0 0% 6%;
+    --foreground: 40 30% 96%;
+
+    --card: 0 0% 9%;
+    --card-foreground: 40 30% 96%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 40 30% 96%;
+
+    /* Gold accent */
+    --primary: 43 74% 58%;
+    --primary-foreground: 0 0% 8%;
+    --primary-glow: 45 90% 68%;
+
+    --secondary: 0 0% 13%;
+    --secondary-foreground: 40 20% 92%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 40 8% 62%;
+
+    --accent: 43 74% 58%;
+    --accent-foreground: 0 0% 8%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 40 30% 96%;
+
+    --success: 142 65% 48%;
+    --success-foreground: 0 0% 8%;
+
+    --warning: 38 92% 55%;
+
+    --border: 40 12% 16%;
+    --input: 0 0% 14%;
+    --ring: 43 74% 58%;
+
+    --radius: 0.75rem;
+
+    --gradient-gold: linear-gradient(135deg, hsl(43 74% 58%), hsl(38 90% 50%));
+    --gradient-surface: linear-gradient(180deg, hsl(0 0% 9%), hsl(0 0% 6%));
+    --gradient-hero: radial-gradient(ellipse at top, hsl(43 74% 18% / 0.6), transparent 60%);
+
+    --shadow-gold: 0 10px 40px -10px hsl(43 74% 58% / 0.35);
+    --shadow-card: 0 8px 24px -12px hsl(0 0% 0% / 0.6);
+    --shadow-elevated: 0 20px 60px -20px hsl(0 0% 0% / 0.8);
+
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 40 20% 88%;
+    --sidebar-primary: 43 74% 58%;
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 40 30% 96%;
+    --sidebar-border: 40 12% 16%;
+    --sidebar-ring: 43 74% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image: var(--gradient-hero);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Playfair Display', 'Montserrat', serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  .text-gold {
+    color: hsl(var(--primary));
+  }
+  .bg-gold-gradient {
+    background: var(--gradient-gold);
+  }
+  .text-gold-gradient {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .surface-gradient {
+    background: var(--gradient-surface);
+  }
+  .hairline {
+    border: 1px solid hsl(var(--border));
+  }
+}
