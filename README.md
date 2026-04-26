@@ -1,66 +1,14 @@
-# Lens Workshop Manager
+# Lens Workshop App - පරිශීලක මාර්ගෝපදේශය
 
-A workshop management application for photography instructors to manage their workshops, collect payments, and track attendees.
+මෙම යෙදුම නිර්මාණය කර ඇත්තේ ඡායාරූපකරණ වැඩමුළු (Photography Workshops) සඳහා සහභාගී වීමට කැමති ඔබට, ඒ සඳහා පහසුවෙන් ලියාපදිංචි වීමට සහ අදාළ විස්තර දැනගැනීමටයි. 
 
-## Features
+ඕනෑම අයෙකුට ඉතා පහසුවෙන් භාවිතා කළ හැකි පරිදි මෙය සරලව සකස් කර ඇත.
 
-- User authentication and profiles
-- Create and manage workshops/events
-- Public join links for students
-- Payment slip upload and management
-- Attendee tracking and payment status
-- Join request approval system
+## ඔබට මෙම යෙදුම හරහා කළ හැකි දේවල්:
 
-## Tech Stack
+* **වැඩමුළු විස්තර බැලීම:** ඉදිරියේදී පැවැත්වෙන වැඩමුළු පිළිබඳ විස්තර, දිනයන්, වේලාවන් සහ ස්ථානයන් පහසුවෙන් බලාගත හැක.
+* **ලියාපදිංචි වීම:** ඔබට සහභාගී වීමට අවශ්‍ය වැඩමුළුවක් තෝරා, අදාළ තොරතුරු ලබා දී ඒ සඳහා ඔබගේ අයදුම්පත (Join Request) යොමු කළ හැක.
+* **ගෙවීම් තහවුරු කිරීම:** වැඩමුළුව සඳහා අදාළ මුදල් බැංකුවට ගෙවා, එම ගෙවීම් පත්‍රිකාවේ (Payment Slip) ඡායාරූපයක් යෙදුම හරහා පහසුවෙන් අප වෙත එවිය හැක.
+* **තොරතුරු දැනගැනීම:** ඔබගේ අයදුම්පතෙහි සහ ගෙවීම් වල වත්මන් තත්ත්වය (Status) ඔබට මෙම යෙදුම හරහාම බලාගත හැක.
 
-- **Frontend**: React + TypeScript + Vite
-- **UI**: Shadcn/ui + Tailwind CSS
-- **Backend**: MySQL database
-- **Authentication**: Custom session-based auth
-
-## Setup
-
-1. **Database Setup**:
-
-   ```bash
-   # Create MySQL database
-   mysql -u root -p < database_schema.sql
-   ```
-
-2. **Environment Variables**:
-
-   ```bash
-   cp .env.example .env
-   # Edit .env with your MySQL credentials
-   ```
-
-3. **Install Dependencies**:
-
-   ```bash
-   bun install
-   ```
-
-4. **Run Development Server**:
-   ```bash
-   bun run dev
-   ```
-
-## Database Schema
-
-The application uses MySQL with the following main tables:
-
-- `users` - User accounts
-- `profiles` - User profiles
-- `events` - Workshop events
-- `attendees` - Event attendees
-- `join_requests` - Student join requests
-- `sessions` - User sessions
-
-## Migration from Supabase
-
-This application was originally built with Supabase but has been migrated to use MySQL. The main changes include:
-
-- Replaced Supabase client with MySQL connection
-- Custom session-based authentication
-- Local file storage for payment slips
-- Direct SQL queries instead of Supabase's query builder
+කිසිදු තාක්ෂණික දැනුමක් නොමැතිව, ඔබට අවශ්‍ය තොරතුරු ඇතුළත් කර පහසුවෙන් මෙම යෙදුම භාවිතා කළ හැක.
