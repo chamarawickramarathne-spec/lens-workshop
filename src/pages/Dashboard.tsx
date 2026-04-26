@@ -95,7 +95,10 @@ const Dashboard = () => {
     const earned = events.reduce((s, e) => s + e.total_collected, 0);
     const pending = events.reduce((s, e) => s + e.total_pending, 0);
     const students = events.reduce((s, e) => s + e.attendees_count, 0);
-    return { earned, pending, students };
+    const now = new Date();
+    const active = events.filter((e) => new Date(e.event_date) >= now).length;
+    const completed = events.filter((e) => new Date(e.event_date) < now).length;
+    return { earned, pending, students, active, completed };
   }, [events]);
 
   return (
@@ -118,7 +121,7 @@ const Dashboard = () => {
       <div className="grid lg:grid-cols-[1fr_340px] gap-8">
         <div className="space-y-8">
           {/* Stats - More Compact */}
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatCard
               icon={Wallet}
               label="Total earnings"
@@ -134,6 +137,12 @@ const Dashboard = () => {
               icon={Users}
               label="Total Students"
               value={String(totals.students)}
+            />
+            <StatCard
+              icon={Calendar}
+              label="Workshops"
+              value={`${totals.active} / ${totals.completed}`}
+              subtitle="active / ended"
             />
           </div>
 
@@ -196,11 +205,13 @@ const StatCard = ({
   label,
   value,
   accent,
+  subtitle,
 }: {
   icon: any;
   label: string;
   value: string;
   accent?: boolean;
+  subtitle?: string;
 }) => (
   <div
     className={`surface-gradient rounded-2xl p-5 hairline ${accent ? "shadow-gold border-gold/20" : "shadow-card"} flex items-center gap-4 transition-all hover:border-gold/30 group`}
@@ -217,6 +228,7 @@ const StatCard = ({
     <div className="min-w-0">
       <span className="text-[11px] uppercase tracking-wider text-muted-foreground block mb-0.5 opacity-80">{label}</span>
       <p className="font-display text-xl font-bold truncate">{value}</p>
+      {subtitle && <span className="text-[10px] text-muted-foreground">{subtitle}</span>}
     </div>
   </div>
 );

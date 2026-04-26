@@ -203,6 +203,28 @@ const EventDetail = () => {
   const deleteEvent = async () => {
     if (!event) return;
     try {
+      // Collect all file URLs to delete (attendee slips + pending request slips + cover image)
+      const fileUrls: string[] = [];
+
+      attendees.forEach((a) => {
+        if (a.payment_slip_url) fileUrls.push(a.payment_slip_url);
+      });
+      requests.forEach((r) => {
+        if (r.payment_slip_url) fileUrls.push(r.payment_slip_url);
+      });
+      if (event.image_url) fileUrls.push(event.image_url);
+
+      // Delete all files in parallel
+      await Promise.allSettled(
+        fileUrls.map((url) =>
+          fetch("/api/delete-file", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
+          })
+        )
+      );
+
       await EventService.deleteEvent(event.id);
       toast.success("Workshop deleted");
       navigate("/dashboard");
