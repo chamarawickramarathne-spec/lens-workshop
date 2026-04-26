@@ -67,6 +67,44 @@ export class EventService {
     return await Database.query(sql);
   }
 
+  static async updateEvent(eventId: string, eventData: {
+    event_name: string;
+    event_date: string;
+    end_date?: string;
+    price_per_head: number;
+    max_students: number;
+    notes?: string;
+    location?: string;
+    image_url?: string;
+    for_whom?: string;
+  }) {
+    const sql = `
+      UPDATE events SET
+        event_name = ?,
+        event_date = ?,
+        end_date = ?,
+        price_per_head = ?,
+        max_students = ?,
+        notes = ?,
+        location = ?,
+        image_url = ?,
+        for_whom = ?
+      WHERE id = ?
+    `;
+    return await Database.query(sql, [
+      eventData.event_name,
+      eventData.event_date,
+      eventData.end_date || null,
+      eventData.price_per_head,
+      eventData.max_students,
+      eventData.notes || null,
+      eventData.location || null,
+      eventData.image_url || null,
+      eventData.for_whom || null,
+      eventId
+    ]);
+  }
+
   static async deleteEvent(eventId: string) {
     const sql = 'DELETE FROM events WHERE id = ?';
     return await Database.query(sql, [eventId]);

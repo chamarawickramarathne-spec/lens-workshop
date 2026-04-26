@@ -11,6 +11,7 @@ import Auth from "./pages/Auth.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import NewEvent from "./pages/NewEvent.tsx";
 import EventDetail from "./pages/EventDetail.tsx";
+import EditEvent from "./pages/EditEvent.tsx";
 import Join from "./pages/Join.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
             <Route path="/events/new" element={<Protected><NewEvent /></Protected>} />
             <Route path="/events/:id" element={<Protected><EventDetail /></Protected>} />
+            <Route path="/events/:id/edit" element={<Protected><EditEvent /></Protected>} />
             <Route path="/join/:id" element={<Join />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
