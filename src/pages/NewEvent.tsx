@@ -30,37 +30,15 @@ const NewEvent = () => {
 
   const validateImage = (file: File): Promise<boolean> => {
     return new Promise((resolve) => {
-      // Size check
       if (file.size > 1024 * 1024) {
         toast.error("Image must be less than 1MB");
         return resolve(false);
       }
-
-      // Type check
       if (!["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
         toast.error("Only JPEG or PNG images are allowed");
         return resolve(false);
       }
-
-      // Aspect ratio check (3:4)
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      img.onload = () => {
-        const ratio = img.width / img.height;
-        const targetRatio = 3 / 4;
-        const tolerance = 0.05; // 5% tolerance
-
-        if (Math.abs(ratio - targetRatio) > tolerance) {
-          toast.error("Image must have a 3:4 aspect ratio");
-          resolve(false);
-        } else {
-          resolve(true);
-        }
-      };
-      img.onerror = () => {
-        toast.error("Invalid image file");
-        resolve(false);
-      };
+      resolve(true);
     });
   };
 
@@ -158,7 +136,7 @@ const NewEvent = () => {
         <div className="space-y-6">
           {/* Image Upload Section */}
           <div className="space-y-2">
-            <Label>Workshop Cover Image (3:4 ratio, max 1MB)</Label>
+            <Label>Workshop Cover Image (max 1MB, JPEG/PNG)</Label>
             <div 
               className={`relative h-64 w-48 mx-auto rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center overflow-hidden bg-secondary/20 ${preview ? 'border-gold/50' : 'border-border/50 hover:border-gold/30'}`}
               onClick={() => document.getElementById("file-upload")?.click()}

@@ -64,19 +64,7 @@ const EditEvent = () => {
         toast.error("Only JPEG or PNG images are allowed");
         return resolve(false);
       }
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      img.onload = () => {
-        const ratio = img.width / img.height;
-        const targetRatio = 3 / 4;
-        if (Math.abs(ratio - targetRatio) > 0.05) {
-          toast.error("Image must have a 3:4 aspect ratio");
-          resolve(false);
-        } else {
-          resolve(true);
-        }
-      };
-      img.onerror = () => { toast.error("Invalid image file"); resolve(false); };
+      resolve(true);
     });
   };
 
@@ -184,7 +172,7 @@ const EditEvent = () => {
         <div className="space-y-6">
           {/* Cover Image */}
           <div className="space-y-2">
-            <Label>Workshop Cover Image (3:4 ratio, max 1MB)</Label>
+            <Label>Workshop Cover Image (max 1MB, JPEG/PNG)</Label>
             <div
               className={`relative h-64 w-48 mx-auto rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center overflow-hidden bg-secondary/20 cursor-pointer ${preview ? "border-gold/50" : "border-border/50 hover:border-gold/30"}`}
               onClick={() => document.getElementById("file-upload-edit")?.click()}

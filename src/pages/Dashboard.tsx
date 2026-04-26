@@ -10,6 +10,7 @@ import {
   TrendingUp,
   Clock,
   Inbox,
+  Link2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EventService } from "@/integrations/mysql/services";
@@ -17,6 +18,7 @@ import { Database } from "@/integrations/mysql/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface EventRow {
   id: string;
@@ -258,9 +260,7 @@ const PackageDetails = ({ userPackage, eventsCount }: { userPackage: any, events
           </div>
         </div>
 
-        <Button className="w-full bg-secondary hover:bg-secondary/80 text-foreground border border-border/50 font-semibold h-11">
-          Upgrade Plan
-        </Button>
+
       </div>
     </div>
   );
@@ -271,6 +271,19 @@ const EventCard = ({ event, index }: { event: EventRow; index: number }) => {
     event.max_students > 0
       ? (event.attendees_count / event.max_students) * 100
       : 0;
+
+  const isPast = new Date(event.event_date) < new Date();
+  const joinUrl = `${window.location.origin}/join/${event.id}`;
+
+  const copyJoinLink = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigator.clipboard.writeText(joinUrl).then(() => {
+      toast.success("Join link copied!");
+    }).catch(() => {
+      toast.error("Couldn't copy link");
+    });
+  };
+
   return (
     <Link
       to={`/events/${event.id}`}
@@ -293,6 +306,11 @@ const EventCard = ({ event, index }: { event: EventRow; index: number }) => {
               <h3 className="font-display text-lg font-semibold truncate group-hover:text-gold transition-colors">
                 {event.event_name}
               </h3>
+              {isPast && (
+                <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border/50 font-medium">
+                  Ended
+                </span>
+              )}
             </div>
             
             <div className="space-y-1">
@@ -309,37 +327,47 @@ const EventCard = ({ event, index }: { event: EventRow; index: number }) => {
             </div>
           </div>
 
-      <div className="space-y-3">
-        <div>
-          <div className="flex justify-between text-xs mb-1.5">
-            <span className="text-muted-foreground">Capacity</span>
-            <span className="font-medium">
-              {event.attendees_count}/{event.max_students || "∞"}
-            </span>
-          </div>
-          <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
-            <div
-              className="h-full bg-gold-gradient transition-all"
-              style={{ width: `${Math.min(filledPct, 100)}%` }}
-            />
-          </div>
-        </div>
+          <div className="space-y-3">
+            <div>
+              <div className="flex justify-between text-xs mb-1.5">
+                <span className="text-muted-foreground">Capacity</span>
+                <span className="font-medium">
+                  {event.attendees_count}/{event.max_students || "∞"}
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                <div
+                  className="h-full bg-gold-gradient transition-all"
+                  style={{ width: `${Math.min(filledPct, 100)}%` }}
+                />
+              </div>
+            </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-border">
-          <div className="flex items-center gap-1.5 text-sm">
-            <TrendingUp className="w-3.5 h-3.5 text-gold" />
-            <span className="font-semibold">
-              Rs {event.total_collected.toLocaleString()}
-            </span>
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <div className="flex items-center gap-1.5 text-sm">
+                <TrendingUp className="w-3.5 h-3.5 text-gold" />
+                <span className="font-semibold">
+                  Rs {event.total_collected.toLocaleString()}
+                </span>
+              </div>
+              {!isPast ? (
+                <button
+                  onClick={copyJoinLink}
+                  className="flex items-center gap-1 text-[11px] text-gold hover:text-gold/80 transition-colors px-2 py-1 rounded-lg bg-gold/10 hover:bg-gold/20"
+                >
+                  <Link2 className="w-3 h-3" />
+                  Copy link
+                </button>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  {event.paid_count}/{event.attendees_count} paid
+                </span>
+              )}
+            </div>
           </div>
-          <span className="text-xs text-muted-foreground">
-            {event.paid_count}/{event.attendees_count} paid
-          </span>
         </div>
       </div>
-    </div>
-  </div>
-</Link>
+    </Link>
   );
 };
 

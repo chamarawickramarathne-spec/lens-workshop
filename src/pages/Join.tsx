@@ -27,6 +27,7 @@ interface Event {
   id: string;
   event_name: string;
   event_date: string;
+  end_date: string | null;
   price_per_head: number;
   notes: string | null;
 }
@@ -157,6 +158,33 @@ const Join = () => {
             <span className="text-gold">{event.event_name}</span>. The organizer
             has received your payment slip and will be in touch.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Determine if workshop is over (use end_date if available, else event_date)
+  const referenceDate = event.end_date ? new Date(event.end_date) : new Date(event.event_date);
+  const isExpired = referenceDate < new Date();
+
+  if (isExpired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="container max-w-lg py-24 text-center space-y-6 animate-fade-in">
+          <div className="w-16 h-16 mx-auto rounded-full bg-secondary grid place-items-center border border-border/50">
+            <Calendar className="w-7 h-7 text-muted-foreground" />
+          </div>
+          <div>
+            <h1 className="font-display text-3xl font-bold">Registration Closed</h1>
+            <p className="text-muted-foreground mt-3 leading-relaxed">
+              The registration window for{" "}
+              <span className="text-foreground font-medium">{event.event_name}</span>{" "}
+              has ended. Please contact the organiser for more information.
+            </p>
+          </div>
+          <Link to="/">
+            <Button variant="outline">Go home</Button>
+          </Link>
         </div>
       </div>
     );
