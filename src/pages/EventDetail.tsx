@@ -48,6 +48,10 @@ interface Event {
   id: string;
   event_name: string;
   event_date: string;
+  end_date: string | null;
+  location: string | null;
+  image_url: string | null;
+  for_whom: string | null;
   price_per_head: number;
   max_students: number;
   notes: string | null;
@@ -328,22 +332,71 @@ const EventDetail = () => {
       </Button>
 
       {/* Hero */}
-      <div className="surface-gradient rounded-2xl p-5 sm:p-6 hairline shadow-card">
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-          <div>
-            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
-              {event.event_name}
-            </h1>
-            <p className="text-muted-foreground mt-2 flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              {format(new Date(event.event_date), "PPPP 'at' p")}
-            </p>
-            {event.notes && (
-              <p className="text-sm text-muted-foreground mt-3 max-w-2xl">
-                {event.notes}
-              </p>
-            )}
+      <div className="surface-gradient rounded-2xl overflow-hidden hairline shadow-card flex flex-col md:flex-row min-h-[400px]">
+        {event.image_url && (
+          <div className="w-full md:w-72 lg:w-80 shrink-0 bg-secondary/20 border-b md:border-b-0 md:border-r border-border/50">
+            <img 
+              src={event.image_url} 
+              alt={event.event_name} 
+              className="w-full h-full object-cover"
+            />
           </div>
+        )}
+        <div className="p-5 sm:p-8 flex-1 flex flex-col justify-between">
+          <div className="space-y-4 flex-1">
+              <div>
+                <Badge variant="gold" className="mb-3 px-2.5 py-0.5 rounded-full bg-gold/10 text-gold text-[10px] uppercase tracking-widest font-bold border border-gold/20">
+                  Workshop Details
+                </Badge>
+                <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
+                  {event.event_name}
+                </h1>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <div className="w-8 h-8 rounded-lg bg-secondary/50 grid place-items-center">
+                    <Calendar className="w-4 h-4 text-gold" />
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium text-foreground">Timeline</p>
+                    <p>{format(new Date(event.event_date), "PPP p")} - {event.end_date ? format(new Date(event.end_date), "p") : "End"}</p>
+                  </div>
+                </div>
+
+                {event.location && (
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <div className="w-8 h-8 rounded-lg bg-secondary/50 grid place-items-center">
+                      <Inbox className="w-4 h-4 text-gold" />
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-medium text-foreground">Location</p>
+                      <p>{event.location}</p>
+                    </div>
+                  </div>
+                )}
+
+                {event.for_whom && (
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <div className="w-8 h-8 rounded-lg bg-secondary/50 grid place-items-center">
+                      <Users className="w-4 h-4 text-gold" />
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-medium text-foreground">Audience</p>
+                      <p>{event.for_whom}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {event.notes && (
+                <div className="pt-4 border-t border-border/50">
+                  <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                    {event.notes}
+                  </p>
+                </div>
+              )}
+            </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={downloadPDF}>
               <Download className="w-4 h-4" /> PDF Report
@@ -374,8 +427,9 @@ const EventDetail = () => {
             </AlertDialog>
           </div>
         </div>
+      </div>
 
-        {/* Join link display */}
+      {/* Join link display */}
         <div className="mt-6 flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary/40 hairline">
           <Link2 className="w-4 h-4 text-gold shrink-0" />
           <code className="text-xs sm:text-sm text-muted-foreground truncate flex-1">
@@ -405,9 +459,8 @@ const EventDetail = () => {
             value={`Rs ${pendingAmt.toLocaleString()}`}
           />
         </div>
-      </div>
 
-      {/* Join Requests */}
+        {/* Join Requests */}
       {requests.length > 0 && (
         <div className="surface-gradient rounded-2xl hairline shadow-card overflow-hidden">
           <div className="p-6 border-b border-border flex items-center justify-between">

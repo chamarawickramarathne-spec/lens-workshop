@@ -10,6 +10,10 @@ export class EventService {
         e.event_date,
         e.price_per_head,
         e.max_students,
+        e.location,
+        e.image_url,
+        e.for_whom,
+        e.end_date,
         COUNT(a.id) as attendees_count,
         COUNT(CASE WHEN a.payment_status_id = 2 THEN 1 END) as paid_count,
         COALESCE(SUM(CASE WHEN a.payment_status_id = 2 THEN a.amount_paid END), 0) as total_collected,
@@ -17,7 +21,7 @@ export class EventService {
       FROM events e
       LEFT JOIN join_requests a ON e.id = a.event_id AND a.status = 'approved'
       WHERE e.user_id = ?
-      GROUP BY e.id, e.event_name, e.event_date, e.price_per_head, e.max_students
+      GROUP BY e.id, e.event_name, e.event_date, e.price_per_head, e.max_students, e.location, e.image_url, e.for_whom, e.end_date
       ORDER BY e.event_date DESC
     `;
     return await Database.query(sql, [userId]);
@@ -29,10 +33,14 @@ export class EventService {
     price_per_head: number;
     max_students: number;
     notes?: string;
+    location?: string;
+    image_url?: string;
+    for_whom?: string;
+    end_date?: string;
   }) {
     const sql = `
-      INSERT INTO events (user_id, event_name, event_date, price_per_head, max_students, notes)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO events (user_id, event_name, event_date, price_per_head, max_students, notes, location, image_url, for_whom, end_date)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     return await Database.query(sql, [
       userId,
@@ -40,7 +48,11 @@ export class EventService {
       eventData.event_date,
       eventData.price_per_head,
       eventData.max_students,
-      eventData.notes || null
+      eventData.notes || null,
+      eventData.location || null,
+      eventData.image_url || null,
+      eventData.for_whom || null,
+      eventData.end_date || null
     ]);
   }
 
@@ -51,7 +63,7 @@ export class EventService {
   }
 
   static async getPublicEvents() {
-    const sql = 'SELECT id, event_name, event_date, price_per_head, notes FROM events ORDER BY event_date DESC';
+    const sql = 'SELECT id, event_name, event_date, end_date, price_per_head, notes, location, image_url, for_whom FROM events ORDER BY event_date DESC';
     return await Database.query(sql);
   }
 

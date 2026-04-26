@@ -9,6 +9,7 @@ import {
   Search,
   TrendingUp,
   Clock,
+  Inbox,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EventService } from "@/integrations/mysql/services";
@@ -21,6 +22,10 @@ interface EventRow {
   id: string;
   event_name: string;
   event_date: string;
+  end_date: string | null;
+  location: string | null;
+  image_url: string | null;
+  for_whom: string | null;
   price_per_head: number;
   max_students: number;
   attendees_count: number;
@@ -49,6 +54,10 @@ const Dashboard = () => {
         id: e.id,
         event_name: e.event_name,
         event_date: e.event_date,
+        end_date: e.end_date,
+        location: e.location,
+        image_url: e.image_url,
+        for_whom: e.for_whom,
         price_per_head: Number(e.price_per_head),
         max_students: e.max_students,
         attendees_count: Number(e.attendees_count),
@@ -265,20 +274,40 @@ const EventCard = ({ event, index }: { event: EventRow; index: number }) => {
   return (
     <Link
       to={`/events/${event.id}`}
-      className="group surface-gradient rounded-2xl p-6 hairline shadow-card hover:shadow-gold transition-all hover:-translate-y-1 animate-fade-in block"
+      className="group surface-gradient rounded-2xl overflow-hidden hairline shadow-card hover:shadow-gold transition-all hover:-translate-y-1 animate-fade-in block"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-display text-xl font-semibold truncate group-hover:text-gold transition-colors">
-            {event.event_name}
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5" />
-            {format(new Date(event.event_date), "PPP")}
-          </p>
-        </div>
-      </div>
+      <div className="flex h-full">
+        {event.image_url && (
+          <div className="w-24 sm:w-32 shrink-0 overflow-hidden border-r border-border/50">
+            <img 
+              src={event.image_url} 
+              alt={event.event_name} 
+              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            />
+          </div>
+        )}
+        <div className="p-5 flex-1 min-w-0 flex flex-col justify-between">
+          <div>
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <h3 className="font-display text-lg font-semibold truncate group-hover:text-gold transition-colors">
+                {event.event_name}
+              </h3>
+            </div>
+            
+            <div className="space-y-1">
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                <Calendar className="w-3 h-3 text-gold/70" />
+                {format(new Date(event.event_date), "PPP")}
+              </p>
+              {event.location && (
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 truncate">
+                  <Inbox className="w-3 h-3 text-gold/70" />
+                  {event.location}
+                </p>
+              )}
+            </div>
+          </div>
 
       <div className="space-y-3">
         <div>
@@ -308,7 +337,9 @@ const EventCard = ({ event, index }: { event: EventRow; index: number }) => {
           </span>
         </div>
       </div>
-    </Link>
+    </div>
+  </div>
+</Link>
   );
 };
 

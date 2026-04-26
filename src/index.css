@@ -112,3 +112,17 @@
     border: 1px solid hsl(var(--border));
   }
 }
+
+/* Make datetime-local calendar icon visible on dark backgrounds */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.7) sepia(1) hue-rotate(5deg) saturate(3);
+  cursor: pointer;
+  opacity: 0.8;
+}
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
