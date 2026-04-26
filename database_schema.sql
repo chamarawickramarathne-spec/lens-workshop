@@ -4,13 +4,29 @@
 CREATE DATABASE IF NOT EXISTS lens_workshop;
 USE lens_workshop;
 
+-- Packages table
+CREATE TABLE packages (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(50) NOT NULL UNIQUE,
+  max_workshops INT NOT NULL DEFAULT 10,
+  max_students_per_workshop INT NOT NULL DEFAULT 50,
+  max_slip_size_mb INT NOT NULL DEFAULT 1,
+  price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO packages (name, max_workshops, max_students_per_workshop, max_slip_size_mb, price)
+VALUES ('Free', 10, 50, 1, 0.00);
+
 -- Users table (replacing Supabase auth.users)
 CREATE TABLE users (
   id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
+  package_id INT NOT NULL DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (package_id) REFERENCES packages(id)
 );
 
 -- Profiles table
