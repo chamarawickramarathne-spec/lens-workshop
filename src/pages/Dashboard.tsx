@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EventService } from "@/integrations/mysql/services";
+import { Database } from "@/integrations/mysql/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,13 +33,18 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userPackage, setUserPackage] = useState<any>(null);
   const [query, setQuery] = useState("");
 
   const load = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const eventsData = await EventService.getEventsByUser(user.id);
+      const [eventsData, pkgData] = await Promise.all([
+        EventService.getEventsByUser(user.id),
+        Database.getUserPackage(user.id)
+      ]);
+      
       const rows: EventRow[] = (eventsData as any[]).map((e: any) => ({
         id: e.id,
         event_name: e.event_name,
@@ -51,6 +57,7 @@ const Dashboard = () => {
         total_pending: Number(e.total_pending),
       }));
       setEvents(rows);
+      setUserPackage(pkgData);
     } catch (error) {
       console.error("Failed to load events:", error);
     } finally {
@@ -81,69 +88,94 @@ const Dashboard = () => {
   }, [events]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-[1400px] mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <p className="text-sm text-muted-foreground mb-1">Welcome back</p>
-          <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
+          <p className="text-sm text-muted-foreground mb-1 uppercase tracking-widest font-medium opacity-70">Control Center</p>
+          <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">
             Your <span className="text-gold-gradient">workshops</span>
           </h1>
         </div>
         <Link to="/events/new">
-          <Button variant="hero" size="lg">
-            <Plus className="w-4 h-4" /> New Workshop
+          <Button variant="hero" size="lg" className="shadow-gold-lg">
+            <Plus className="w-5 h-5 mr-1" /> New Workshop
           </Button>
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid sm:grid-cols-3 gap-4">
-        <StatCard
-          icon={Wallet}
-          label="Total earnings"
-          value={`Rs ${totals.earned.toLocaleString()}`}
-          accent
-        />
-        <StatCard
-          icon={Clock}
-          label="Pending"
-          value={`Rs ${totals.pending.toLocaleString()}`}
-        />
-        <StatCard
-          icon={Users}
-          label="Students"
-          value={String(totals.students)}
-        />
-      </div>
+      <div className="grid lg:grid-cols-[1fr_340px] gap-8">
+        <div className="space-y-8">
+          {/* Stats - More Compact */}
+          <div className="grid sm:grid-cols-3 gap-4">
+            <StatCard
+              icon={Wallet}
+              label="Total earnings"
+              value={`Rs ${totals.earned.toLocaleString()}`}
+              accent
+            />
+            <StatCard
+              icon={Clock}
+              label="Pending"
+              value={`Rs ${totals.pending.toLocaleString()}`}
+            />
+            <StatCard
+              icon={Users}
+              label="Total Students"
+              value={String(totals.students)}
+            />
+          </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search workshops by name or date..."
-          className="pl-10"
-        />
-      </div>
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search workshops..."
+              className="pl-10 h-11 bg-secondary/30 border-border/50"
+            />
+          </div>
 
-      {/* Events */}
-      {loading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-52 rounded-2xl" />
-          ))}
+          {/* Events */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-xl font-bold tracking-tight">Active Workshops</h2>
+              <span className="text-sm text-muted-foreground">{filtered.length} found</span>
+            </div>
+            
+            {loading ? (
+              <div className="grid sm:grid-cols-2 gap-5">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-44 rounded-2xl" />
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
+              <EmptyState hasEvents={events.length > 0} />
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-5">
+                {filtered.map((e, i) => (
+                  <EventCard key={e.id} event={e} index={i} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      ) : filtered.length === 0 ? (
-        <EmptyState hasEvents={events.length > 0} />
-      ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((e, i) => (
-            <EventCard key={e.id} event={e} index={i} />
-          ))}
-        </div>
-      )}
+
+        {/* Sidebar - Package Details */}
+        <aside className="space-y-6">
+          <PackageDetails userPackage={userPackage} eventsCount={events.length} />
+          
+          <div className="surface-gradient rounded-2xl p-6 hairline shadow-card bg-gold/5 border-gold/10">
+            <h3 className="font-display font-bold mb-2 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-gold" /> Quick Tip
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Share your workshop link with students to automate registration and payment tracking.
+            </p>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 };
@@ -160,23 +192,70 @@ const StatCard = ({
   accent?: boolean;
 }) => (
   <div
-    className={`surface-gradient rounded-2xl p-6 hairline ${accent ? "shadow-gold" : "shadow-card"}`}
+    className={`surface-gradient rounded-2xl p-5 hairline ${accent ? "shadow-gold border-gold/20" : "shadow-card"} flex items-center gap-4 transition-all hover:border-gold/30 group`}
   >
-    <div className="flex items-center justify-between mb-3">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <div
-        className={`w-9 h-9 rounded-lg grid place-items-center ${
-          accent ? "bg-gold-gradient" : "bg-secondary"
-        }`}
-      >
-        <Icon
-          className={`w-4 h-4 ${accent ? "text-primary-foreground" : "text-gold"}`}
-        />
-      </div>
+    <div
+      className={`w-11 h-11 rounded-xl shrink-0 grid place-items-center transition-transform group-hover:scale-110 ${
+        accent ? "bg-gold-gradient" : "bg-secondary"
+      }`}
+    >
+      <Icon
+        className={`w-5 h-5 ${accent ? "text-primary-foreground" : "text-gold"}`}
+      />
     </div>
-    <p className="font-display text-2xl font-bold">{value}</p>
+    <div className="min-w-0">
+      <span className="text-[11px] uppercase tracking-wider text-muted-foreground block mb-0.5 opacity-80">{label}</span>
+      <p className="font-display text-xl font-bold truncate">{value}</p>
+    </div>
   </div>
 );
+
+const PackageDetails = ({ userPackage, eventsCount }: { userPackage: any, eventsCount: number }) => {
+  if (!userPackage) return <Skeleton className="h-64 rounded-2xl" />;
+
+  const workshopUsage = (eventsCount / userPackage.max_workshops) * 100;
+
+  return (
+    <div className="surface-gradient rounded-2xl p-6 hairline shadow-card animate-fade-in sticky top-24">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="font-display text-lg font-bold">Your Plan</h3>
+        <span className="px-3 py-1 rounded-full bg-gold/10 text-gold text-[10px] uppercase tracking-widest font-bold border border-gold/20 shadow-glow-sm">
+          {userPackage.name}
+        </span>
+      </div>
+
+      <div className="space-y-6">
+        <div>
+          <div className="flex justify-between text-xs mb-2">
+            <span className="text-muted-foreground uppercase tracking-wider">Workshop Capacity</span>
+            <span className="font-bold">{eventsCount} / {userPackage.max_workshops}</span>
+          </div>
+          <div className="h-2 rounded-full bg-secondary/50 overflow-hidden border border-border/50">
+            <div 
+              className="h-full bg-gold-gradient transition-all shadow-glow-gold" 
+              style={{ width: `${Math.min(workshopUsage, 100)}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-3 rounded-xl bg-secondary/30 border border-border/50 transition-colors hover:bg-secondary/50">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">Max Students</span>
+            <span className="text-sm font-bold">{userPackage.max_students_per_workshop}</span>
+          </div>
+          <div className="p-3 rounded-xl bg-secondary/30 border border-border/50 transition-colors hover:bg-secondary/50">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">Slip Limit</span>
+            <span className="text-sm font-bold">{userPackage.max_slip_size_mb}MB</span>
+          </div>
+        </div>
+
+        <Button className="w-full bg-secondary hover:bg-secondary/80 text-foreground border border-border/50 font-semibold h-11">
+          Upgrade Plan
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 const EventCard = ({ event, index }: { event: EventRow; index: number }) => {
   const filledPct =

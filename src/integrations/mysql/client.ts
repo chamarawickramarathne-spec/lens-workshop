@@ -72,4 +72,15 @@ export class Database {
       [displayName || null, avatarUrl || null, userId]
     );
   }
+
+  static async getUserPackage(userId: string) {
+    const sql = `
+      SELECT p.* 
+      FROM users u 
+      JOIN packages p ON u.package_id = p.id 
+      WHERE u.id = ?
+    `;
+    const result = await this.query(sql, [userId]);
+    return Array.isArray(result) ? result[0] : null;
+  }
 }
