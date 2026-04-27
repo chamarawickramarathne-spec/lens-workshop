@@ -112,21 +112,17 @@ app.post('/api/query', async (req, res) => {
   }
 });
 
-// Delete account endpoint - sends confirmation email, deletes files + data
+// Delete account endpoint - manual wipe of files + all related data
 app.post('/api/delete-account', async (req, res) => {
   const { userId } = req.body;
   if (!userId) return res.status(400).json({ error: 'userId is required' });
 
+  const connection = await pool.getConnection();
   try {
-    // 1. Get user email
-    const [users] = await pool.execute('SELECT email FROM users WHERE id = ?', [userId]);
-    if (!Array.isArray(users) || users.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    const userEmail = users[0].email;
+    await connection.beginTransaction();
 
-    // 2. Get all uploaded files for this user
-    const [files] = await pool.execute(`
+    // 1. Get all file URLs before deleting records
+    const [files] = await connection.execute(`
       SELECT DISTINCT file_url FROM (
         SELECT image_url as file_url FROM events WHERE user_id = ? AND image_url IS NOT NULL AND image_url != ''
         UNION ALL
@@ -138,7 +134,7 @@ app.post('/api/delete-account', async (req, res) => {
       ) all_files
     `, [userId, userId, userId]);
 
-    // 3. Delete physical files
+    // 2. Delete Physical Files
     if (Array.isArray(files)) {
       for (const row of files) {
         const fileUrl = row.file_url;
@@ -148,24 +144,45 @@ app.post('/api/delete-account', async (req, res) => {
           try {
             if (fs.existsSync(fpath)) {
               fs.unlinkSync(fpath);
-              console.log(`Account cleanup: Deleted ${fpath}`);
-            } else {
-              console.warn(`Account cleanup: File not found ${fpath}`);
+              console.log(`Force Wipe: Deleted file ${fpath}`);
             }
-          } catch (e) {
-            console.error(`Account cleanup: Failed to delete ${fpath}`, e.message);
-          }
+          } catch (e) { console.error(`Force Wipe: File fail ${fpath}`, e.message); }
         }
       }
     }
 
-    // 4. Delete user from DB (CASCADE handles related tables)
-    await pool.execute('DELETE FROM users WHERE id = ?', [userId]);
+    // 3. Manual Data Purge (In order to satisfy foreign keys)
+    console.log(`Force Wipe: Deleting DB data for user ${userId}`);
+    
+    // Delete Join Requests first (child of events)
+    await connection.execute(`
+      DELETE jr FROM join_requests jr 
+      INNER JOIN events e ON jr.event_id = e.id 
+      WHERE e.user_id = ?
+    `, [userId]);
 
+    // Delete Events
+    await connection.execute('DELETE FROM events WHERE user_id = ?', [userId]);
+
+    // Delete Profile
+    await connection.execute('DELETE FROM profiles WHERE user_id = ?', [userId]);
+
+    // Delete Sessions (if any)
+    await connection.execute('DELETE FROM sessions WHERE user_id = ?', [userId]).catch(() => {});
+
+    // Finally Delete User
+    await connection.execute('DELETE FROM users WHERE id = ?', [userId]);
+
+    await connection.commit();
+    console.log(`Force Wipe: Completed successfully for user ${userId}`);
     res.json({ success: true });
+
   } catch (err) {
-    console.error('Delete account error:', err);
-    res.status(500).json({ error: 'Failed to delete account' });
+    await connection.rollback();
+    console.error('Force Wipe Error:', err);
+    res.status(500).json({ error: 'Failed to fully delete account' });
+  } finally {
+    connection.release();
   }
 });
 
