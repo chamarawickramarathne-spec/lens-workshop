@@ -13,6 +13,7 @@ import NewEvent from "./pages/NewEvent.tsx";
 import EventDetail from "./pages/EventDetail.tsx";
 import EditEvent from "./pages/EditEvent.tsx";
 import Join from "./pages/Join.tsx";
+import Reports from "./pages/Reports.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/events/new" element={<Protected><NewEvent /></Protected>} />
             <Route path="/events/:id" element={<Protected><EventDetail /></Protected>} />
             <Route path="/events/:id/edit" element={<Protected><EditEvent /></Protected>} />
+            <Route path="/reports" element={<Protected><Reports /></Protected>} />
             <Route path="/join/:id" element={<Join />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

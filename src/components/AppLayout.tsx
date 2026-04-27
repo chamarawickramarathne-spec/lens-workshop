@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { GraduationCap, LogOut, LayoutDashboard, CalendarPlus } from "lucide-react";
+import { GraduationCap, LogOut, LayoutDashboard, CalendarPlus, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
 
   const navItems = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/reports", label: "Reports", icon: BarChart3 },
     { to: "/events/new", label: "New Workshop", icon: CalendarPlus },
   ];
 

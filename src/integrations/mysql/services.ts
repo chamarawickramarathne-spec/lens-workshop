@@ -210,3 +210,108 @@ export class JoinRequestService {
     await this.updateJoinRequestStatus(requestId, 'rejected');
   }
 }
+
+// Database functions for reports
+export class ReportService {
+  static async getEarningsSummary(userId: string, period: 'week' | 'month' | 'year') {
+    const dateFilter = period === 'week'
+      ? "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
+      : period === 'month'
+        ? "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
+        : "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)";
+
+    const sql = `
+      SELECT
+        COUNT(DISTINCT e.id) as total_workshops,
+        COALESCE(SUM(CASE WHEN a.payment_status_id = 2 THEN a.amount_paid END), 0) as total_earned,
+        COALESCE(COUNT(CASE WHEN a.status = 'approved' THEN 1 END), 0) as total_students,
+        COALESCE(COUNT(CASE WHEN a.payment_status_id = 1 AND a.status = 'approved' THEN 1 END), 0) as pending_payments,
+        COALESCE(SUM(CASE WHEN a.payment_status_id = 1 AND a.status = 'approved' THEN e.price_per_head END), 0) as pending_amount,
+        COALESCE(COUNT(CASE WHEN a.payment_status_id = 2 THEN 1 END), 0) as paid_students
+      FROM events e
+      LEFT JOIN join_requests a ON e.id = a.event_id
+      WHERE e.user_id = ? ${dateFilter}
+    `;
+    const result = await Database.query(sql, [userId]);
+    return Array.isArray(result) ? result[0] : null;
+  }
+
+  static async getEarningsOverTime(userId: string, period: 'week' | 'month' | 'year') {
+    let groupBy: string, dateFormat: string, dateFilter: string;
+
+    if (period === 'week') {
+      groupBy = "DATE(e.event_date)";
+      dateFormat = "%b %d";
+      dateFilter = "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
+    } else if (period === 'month') {
+      groupBy = "DATE(e.event_date)";
+      dateFormat = "%b %d";
+      dateFilter = "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+    } else {
+      groupBy = "DATE_FORMAT(e.event_date, '%Y-%m')";
+      dateFormat = "%b %Y";
+      dateFilter = "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)";
+    }
+
+    const sql = `
+      SELECT
+        DATE_FORMAT(e.event_date, '${dateFormat}') as label,
+        COALESCE(SUM(CASE WHEN a.payment_status_id = 2 THEN a.amount_paid END), 0) as earned,
+        COUNT(CASE WHEN a.status = 'approved' THEN 1 END) as students
+      FROM events e
+      LEFT JOIN join_requests a ON e.id = a.event_id
+      WHERE e.user_id = ? ${dateFilter}
+      GROUP BY ${groupBy}, DATE_FORMAT(e.event_date, '${dateFormat}')
+      ORDER BY MIN(e.event_date) ASC
+    `;
+    return await Database.query(sql, [userId]);
+  }
+
+  static async getWorkshopTypeBreakdown(userId: string, period: 'week' | 'month' | 'year') {
+    const dateFilter = period === 'week'
+      ? "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
+      : period === 'month'
+        ? "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
+        : "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)";
+
+    const sql = `
+      SELECT
+        COALESCE(e.for_whom, 'General') as category,
+        COUNT(DISTINCT e.id) as workshop_count,
+        COUNT(CASE WHEN a.status = 'approved' THEN 1 END) as student_count,
+        COALESCE(SUM(CASE WHEN a.payment_status_id = 2 THEN a.amount_paid END), 0) as earned
+      FROM events e
+      LEFT JOIN join_requests a ON e.id = a.event_id
+      WHERE e.user_id = ? ${dateFilter}
+      GROUP BY COALESCE(e.for_whom, 'General')
+      ORDER BY student_count DESC
+    `;
+    return await Database.query(sql, [userId]);
+  }
+
+  static async getTopWorkshops(userId: string, period: 'week' | 'month' | 'year') {
+    const dateFilter = period === 'week'
+      ? "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
+      : period === 'month'
+        ? "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
+        : "AND e.event_date >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)";
+
+    const sql = `
+      SELECT
+        e.id,
+        e.event_name,
+        e.for_whom,
+        e.event_date,
+        e.price_per_head,
+        COUNT(CASE WHEN a.status = 'approved' THEN 1 END) as student_count,
+        COALESCE(SUM(CASE WHEN a.payment_status_id = 2 THEN a.amount_paid END), 0) as earned
+      FROM events e
+      LEFT JOIN join_requests a ON e.id = a.event_id
+      WHERE e.user_id = ? ${dateFilter}
+      GROUP BY e.id, e.event_name, e.for_whom, e.event_date, e.price_per_head
+      ORDER BY student_count DESC
+      LIMIT 10
+    `;
+    return await Database.query(sql, [userId]);
+  }
+}
