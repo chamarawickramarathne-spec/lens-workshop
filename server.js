@@ -209,19 +209,17 @@ app.post('/api/query', async (req, res) => {
   }
 });
 
+// Serve static files from the React app
+const distPath = path.join(__dirname, 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
+      res.sendFile(path.join(distPath, 'index.html'));
+    }
+  });
+}
+
 app.listen(port, () => {
   console.log(`Backend server running on http://localhost:${port}`);
 });
-
-// Serve static files from the React app in production
-if (isProduction) {
-  const distPath = path.join(__dirname, 'dist');
-  if (fs.existsSync(distPath)) {
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
-        res.sendFile(path.join(distPath, 'index.html'));
-      }
-    });
-  }
-}
