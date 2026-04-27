@@ -27,6 +27,7 @@ import {
   AttendeeService,
   JoinRequestService,
 } from "@/integrations/mysql/services";
+import { API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -136,8 +137,6 @@ const EventDetail = () => {
       await AttendeeService.createAttendee(event.id, {
         student_name: parsed.data.student_name,
         contact_number: parsed.data.contact_number || undefined,
-        payment_status_id: 1, // pending
-        amount_paid: 0,
       });
       toast.success("Student added");
       load(); // Reload data
@@ -152,25 +151,24 @@ const EventDetail = () => {
 
   const togglePaid = async (a: Attendee) => {
     if (!event) return;
-    const nextStatus = a.payment_status === "paid" ? 1 : 2; // 1 = pending, 2 = paid
-    const amount = nextStatus === 2 ? Number(event.price_per_head) : 0;
-
+    const nextStatus = a.payment_status === "paid" ? "pending" : "approved";
+    
     // Optimistic update
     setAttendees((prev) =>
       prev.map((x) =>
         x.id === a.id
           ? {
               ...x,
-              payment_status: nextStatus === 2 ? "paid" : "pending",
-              amount_paid: amount,
+              payment_status: nextStatus === "approved" ? "paid" : "pending",
+              amount_paid: nextStatus === "approved" ? Number(event.price_per_head) : 0,
             }
           : x,
       ),
     );
 
     try {
-      await AttendeeService.updateAttendeeStatus(a.id, nextStatus, amount);
-      toast.success(nextStatus === 2 ? "Marked paid" : "Marked pending");
+      await AttendeeService.updateAttendeeStatus(a.id, nextStatus);
+      toast.success(nextStatus === "approved" ? "Marked paid" : "Marked pending");
     } catch (error) {
       console.error("Failed to update payment status:", error);
       toast.error("Couldn't update");
@@ -185,7 +183,7 @@ const EventDetail = () => {
       
       // Delete the payment slip file from the server if it exists
       if (a.payment_slip_url) {
-        await fetch('/api/delete-file', {
+        await fetch(`${API_BASE_URL}/api/delete-file`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: a.payment_slip_url }),
@@ -217,7 +215,7 @@ const EventDetail = () => {
       // Delete all files in parallel
       await Promise.allSettled(
         fileUrls.map((url) =>
-          fetch("/api/delete-file", {
+          fetch(`${API_BASE_URL}/api/delete-file`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ url }),

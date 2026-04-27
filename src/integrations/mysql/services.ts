@@ -15,11 +15,11 @@ export class EventService {
         e.for_whom,
         e.end_date,
         COUNT(a.id) as attendees_count,
-        COUNT(CASE WHEN a.payment_status_id = 2 THEN 1 END) as paid_count,
-        COALESCE(SUM(CASE WHEN a.payment_status_id = 2 THEN a.amount_paid END), 0) as total_collected,
-        COUNT(CASE WHEN a.payment_status_id = 1 THEN 1 END) * e.price_per_head as total_pending
+        COUNT(CASE WHEN a.status = 'approved' THEN 1 END) as approved_count,
+        COALESCE(SUM(CASE WHEN a.status = 'approved' THEN e.price_per_head ELSE 0 END), 0) as total_collected,
+        COUNT(CASE WHEN a.status = 'pending' THEN 1 END) * e.price_per_head as total_pending
       FROM events e
-      LEFT JOIN join_requests a ON e.id = a.event_id AND a.status = 'approved'
+      LEFT JOIN join_requests a ON e.id = a.event_id
       WHERE e.user_id = ?
       GROUP BY e.id, e.event_name, e.event_date, e.price_per_head, e.max_students, e.location, e.image_url, e.for_whom, e.end_date
       ORDER BY e.event_date DESC
@@ -115,11 +115,10 @@ export class EventService {
 export class AttendeeService {
   static async getAttendeesByEvent(eventId: string) {
     const sql = `
-      SELECT a.*, a.phone as contact_number, ps.status_name as payment_status
-      FROM join_requests a
-      JOIN payment_status ps ON a.payment_status_id = ps.id
-      WHERE a.event_id = ? AND a.status = 'approved'
-      ORDER BY a.created_at DESC
+      SELECT id, student_name, email, phone as contact_number, status, payment_slip_url, note, created_at
+      FROM join_requests
+      WHERE event_id = ? AND status = 'approved'
+      ORDER BY created_at DESC
     `;
     return await Database.query(sql, [eventId]);
   }
@@ -127,27 +126,23 @@ export class AttendeeService {
   static async createAttendee(eventId: string, attendeeData: {
     student_name: string;
     contact_number?: string;
-    payment_status_id?: number;
-    amount_paid?: number;
     payment_slip_url?: string;
   }) {
     const sql = `
-      INSERT INTO join_requests (event_id, student_name, phone, status, payment_status_id, amount_paid, payment_slip_url)
-      VALUES (?, ?, ?, 'approved', ?, ?, ?)
+      INSERT INTO join_requests (event_id, student_name, phone, status, payment_slip_url)
+      VALUES (?, ?, ?, 'approved', ?)
     `;
     return await Database.query(sql, [
       eventId,
       attendeeData.student_name,
       attendeeData.contact_number || null,
-      attendeeData.payment_status_id || 1,
-      attendeeData.amount_paid || 0,
       attendeeData.payment_slip_url || null
     ]);
   }
 
-  static async updateAttendeeStatus(attendeeId: string, paymentStatusId: number, amountPaid: number) {
-    const sql = 'UPDATE join_requests SET payment_status_id = ?, amount_paid = ? WHERE id = ?';
-    return await Database.query(sql, [paymentStatusId, amountPaid, attendeeId]);
+  static async updateAttendeeStatus(attendeeId: string, status: string) {
+    const sql = 'UPDATE join_requests SET status = ? WHERE id = ?';
+    return await Database.query(sql, [status, attendeeId]);
   }
 
   static async deleteAttendee(attendeeId: string) {
@@ -172,8 +167,8 @@ export class JoinRequestService {
     payment_slip_url: string;
   }) {
     const sql = `
-      INSERT INTO join_requests (event_id, student_name, email, phone, note, payment_slip_url, status, payment_status_id, amount_paid)
-      VALUES (?, ?, ?, ?, ?, ?, 'pending', 1, 0)
+      INSERT INTO join_requests (event_id, student_name, email, phone, note, payment_slip_url, status)
+      VALUES (?, ?, ?, ?, ?, ?, 'pending')
     `;
     return await Database.query(sql, [
       joinData.event_id,
@@ -191,18 +186,9 @@ export class JoinRequestService {
   }
 
   static async approveJoinRequest(requestId: string) {
-    const requests = await Database.query('SELECT * FROM join_requests WHERE id = ?', [requestId]);
-    if (!Array.isArray(requests) || requests.length === 0) {
-      throw new Error('Join request not found');
-    }
-
-    const request = requests[0];
-    const events = await Database.query('SELECT price_per_head FROM events WHERE id = ?', [request.event_id]);
-    const pricePerHead = (Array.isArray(events) && events.length > 0) ? events[0].price_per_head : 0;
-
     await Database.query(
-      "UPDATE join_requests SET status = 'approved', payment_status_id = 2, amount_paid = ? WHERE id = ?",
-      [pricePerHead, requestId]
+      "UPDATE join_requests SET status = 'approved' WHERE id = ?",
+      [requestId]
     );
   }
 
@@ -223,11 +209,11 @@ export class ReportService {
     const sql = `
       SELECT
         COUNT(DISTINCT e.id) as total_workshops,
-        COALESCE(SUM(CASE WHEN a.payment_status_id = 2 THEN a.amount_paid END), 0) as total_earned,
+        COALESCE(SUM(CASE WHEN a.status = 'approved' THEN e.price_per_head ELSE 0 END), 0) as total_earned,
         COALESCE(COUNT(CASE WHEN a.status = 'approved' THEN 1 END), 0) as total_students,
-        COALESCE(COUNT(CASE WHEN a.payment_status_id = 1 AND a.status = 'approved' THEN 1 END), 0) as pending_payments,
-        COALESCE(SUM(CASE WHEN a.payment_status_id = 1 AND a.status = 'approved' THEN e.price_per_head END), 0) as pending_amount,
-        COALESCE(COUNT(CASE WHEN a.payment_status_id = 2 THEN 1 END), 0) as paid_students
+        COALESCE(COUNT(CASE WHEN a.status = 'pending' THEN 1 END), 0) as pending_requests,
+        COALESCE(SUM(CASE WHEN a.status = 'pending' THEN e.price_per_head END), 0) as pending_amount,
+        COALESCE(COUNT(CASE WHEN a.status = 'approved' THEN 1 END), 0) as approved_students
       FROM events e
       LEFT JOIN join_requests a ON e.id = a.event_id
       WHERE e.user_id = ? ${dateFilter}
@@ -256,7 +242,7 @@ export class ReportService {
     const sql = `
       SELECT
         DATE_FORMAT(e.event_date, '${dateFormat}') as label,
-        COALESCE(SUM(CASE WHEN a.payment_status_id = 2 THEN a.amount_paid END), 0) as earned,
+        COALESCE(SUM(CASE WHEN a.status = 'approved' THEN e.price_per_head ELSE 0 END), 0) as earned,
         COUNT(CASE WHEN a.status = 'approved' THEN 1 END) as students
       FROM events e
       LEFT JOIN join_requests a ON e.id = a.event_id
@@ -279,7 +265,7 @@ export class ReportService {
         COALESCE(e.for_whom, 'General') as category,
         COUNT(DISTINCT e.id) as workshop_count,
         COUNT(CASE WHEN a.status = 'approved' THEN 1 END) as student_count,
-        COALESCE(SUM(CASE WHEN a.payment_status_id = 2 THEN a.amount_paid END), 0) as earned
+        COALESCE(SUM(CASE WHEN a.status = 'approved' THEN e.price_per_head ELSE 0 END), 0) as earned
       FROM events e
       LEFT JOIN join_requests a ON e.id = a.event_id
       WHERE e.user_id = ? ${dateFilter}
@@ -304,7 +290,7 @@ export class ReportService {
         e.event_date,
         e.price_per_head,
         COUNT(CASE WHEN a.status = 'approved' THEN 1 END) as student_count,
-        COALESCE(SUM(CASE WHEN a.payment_status_id = 2 THEN a.amount_paid END), 0) as earned
+        COALESCE(SUM(CASE WHEN a.status = 'approved' THEN e.price_per_head ELSE 0 END), 0) as earned
       FROM events e
       LEFT JOIN join_requests a ON e.id = a.event_id
       WHERE e.user_id = ? ${dateFilter}
