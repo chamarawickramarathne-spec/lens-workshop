@@ -118,6 +118,7 @@ const Join = () => {
       phone: parsed.data.phone,
       note: parsed.data.note || null,
       payment_slip_url: paymentSlipUrl,
+      amount_paid: Number(event.price_per_head),
     });
 
     setDone(true);
@@ -147,44 +148,45 @@ const Join = () => {
     );
   }
 
+  const isFull = event.attendees_count >= event.max_students;
+  const isExpired = new Date(event.end_date || event.event_date) < new Date();
+
   if (done) {
     return (
-      <div className="container max-w-xl py-24 text-center space-y-6 animate-fade-in">
-        <div className="w-16 h-16 mx-auto rounded-full bg-gold-gradient grid place-items-center shadow-gold">
-          <CheckCircle2 className="w-8 h-8 text-primary-foreground" />
-        </div>
-        <div>
-          <h1 className="font-display text-4xl font-bold">You're in!</h1>
-          <p className="text-muted-foreground mt-3">
-            You've been added to{" "}
-            <span className="text-gold">{event.event_name}</span>. The organizer
-            has received your payment slip and will be in touch.
+      <div className="min-h-screen grid place-items-center p-4">
+        <div className="max-w-md w-full surface-gradient rounded-2xl p-8 hairline text-center space-y-4">
+          <div className="w-16 h-16 mx-auto rounded-full bg-gold/10 grid place-items-center">
+            <CheckCircle2 className="w-8 h-8 text-gold" />
+          </div>
+          <h1 className="font-display text-3xl font-bold">Registration Received!</h1>
+          <p className="text-muted-foreground leading-relaxed">
+            Your registration for <span className="text-foreground font-medium">{event.event_name}</span> is pending review. We will contact you once approved.
           </p>
+          <Link to="/" className="block">
+            <Button className="w-full bg-gold hover:bg-gold/90 text-black font-semibold">
+              Go to Home
+            </Button>
+          </Link>
         </div>
       </div>
     );
   }
 
-  // Determine if workshop is over (use end_date if available, else event_date)
-  const referenceDate = event.end_date ? new Date(event.end_date) : new Date(event.event_date);
-  const isExpired = referenceDate < new Date();
-
-  if (isExpired) {
+  if (isExpired || isFull) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="container max-w-lg py-24 text-center space-y-6 animate-fade-in">
-          <div className="w-16 h-16 mx-auto rounded-full bg-secondary grid place-items-center border border-border/50">
-            <Calendar className="w-7 h-7 text-muted-foreground" />
+      <div className="min-h-screen grid place-items-center p-4">
+        <div className="max-w-md w-full surface-gradient rounded-2xl p-8 hairline text-center space-y-4">
+          <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 grid place-items-center">
+            <Lock className="w-8 h-8 text-destructive" />
           </div>
-          <div>
-            <h1 className="font-display text-3xl font-bold">Registration Closed</h1>
-            <p className="text-muted-foreground mt-3 leading-relaxed">
-              The registration window for{" "}
-              <span className="text-foreground font-medium">{event.event_name}</span>{" "}
-              has ended. Please contact the organiser for more information.
-            </p>
-          </div>
-          <Link to="/">
+          <h1 className="font-display text-3xl font-bold">{isFull ? "Workshop Full" : "Registration Closed"}</h1>
+          <p className="text-muted-foreground leading-relaxed">
+            {isFull 
+              ? `Sorry, all seats for ${event.event_name} have been taken.`
+              : `The registration window for ${event.event_name} has ended.`
+            } Please contact the organiser for more information.
+          </p>
+          <Link to="/" className="block mt-6">
             <Button variant="outline">Go home</Button>
           </Link>
         </div>
@@ -206,7 +208,6 @@ const Join = () => {
       </header>
 
       <main className="container px-4 sm:px-6 max-w-2xl py-6 sm:py-8 space-y-4 sm:space-y-6">
-        {/* Event hero */}
         <div className="surface-gradient rounded-2xl p-5 sm:p-8 hairline shadow-card">
           <p className="text-[10px] sm:text-xs uppercase tracking-wider text-gold mb-2">
             You're joining
@@ -229,7 +230,6 @@ const Join = () => {
           </div>
         </div>
 
-        {/* Form */}
         <form
           onSubmit={handleSubmit}
           className="surface-gradient rounded-2xl p-5 sm:p-8 hairline shadow-card space-y-5"
@@ -283,7 +283,6 @@ const Join = () => {
             </div>
           </div>
 
-          {/* Slip upload */}
           <div className="space-y-2">
             <Label>Payment slip <span className="text-destructive">*</span></Label>
             <label

@@ -14,7 +14,7 @@ export class EventService {
         e.image_url,
         e.for_whom,
         e.end_date,
-        COUNT(a.id) as attendees_count,
+        COUNT(CASE WHEN a.status IN ('approved', 'unpaid', 'pending') THEN 1 END) as attendees_count,
         COUNT(CASE WHEN a.status = 'approved' THEN 1 END) as approved_count,
         COALESCE(SUM(CASE WHEN a.status = 'approved' THEN e.price_per_head ELSE 0 END), 0) as total_collected,
         COUNT(CASE WHEN a.status = 'pending' THEN 1 END) * e.price_per_head as total_pending
@@ -115,9 +115,9 @@ export class EventService {
 export class AttendeeService {
   static async getAttendeesByEvent(eventId: string) {
     const sql = `
-      SELECT id, student_name, email, phone as contact_number, status, payment_slip_url, note, created_at
+      SELECT id, student_name, email, phone as contact_number, status, amount_paid, payment_slip_url, note, created_at
       FROM join_requests
-      WHERE event_id = ? AND status = 'approved'
+      WHERE event_id = ? AND status IN ('approved', 'unpaid')
       ORDER BY created_at DESC
     `;
     return await Database.query(sql, [eventId]);
@@ -140,9 +140,9 @@ export class AttendeeService {
     ]);
   }
 
-  static async updateAttendeeStatus(attendeeId: string, status: string) {
-    const sql = 'UPDATE join_requests SET status = ? WHERE id = ?';
-    return await Database.query(sql, [status, attendeeId]);
+  static async updateAttendeeStatus(attendeeId: string, status: string, amount: number = 0) {
+    const sql = 'UPDATE join_requests SET status = ?, amount_paid = ? WHERE id = ?';
+    return await Database.query(sql, [status, amount, attendeeId]);
   }
 
   static async deleteAttendee(attendeeId: string) {
@@ -165,10 +165,11 @@ export class JoinRequestService {
     phone: string;
     note?: string;
     payment_slip_url: string;
+    amount_paid?: number;
   }) {
     const sql = `
-      INSERT INTO join_requests (event_id, student_name, email, phone, note, payment_slip_url, status)
-      VALUES (?, ?, ?, ?, ?, ?, 'pending')
+      INSERT INTO join_requests (event_id, student_name, email, phone, note, payment_slip_url, status, amount_paid)
+      VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)
     `;
     return await Database.query(sql, [
       joinData.event_id,
@@ -176,7 +177,8 @@ export class JoinRequestService {
       joinData.email,
       joinData.phone,
       joinData.note || null,
-      joinData.payment_slip_url
+      joinData.payment_slip_url,
+      joinData.amount_paid || 0
     ]);
   }
 
@@ -193,7 +195,8 @@ export class JoinRequestService {
   }
 
   static async rejectJoinRequest(requestId: string) {
-    await this.updateJoinRequestStatus(requestId, 'rejected');
+    const sql = 'DELETE FROM join_requests WHERE id = ?';
+    return await Database.query(sql, [requestId]);
   }
 }
 

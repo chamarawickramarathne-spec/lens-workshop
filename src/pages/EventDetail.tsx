@@ -63,7 +63,7 @@ interface Attendee {
   id: string;
   student_name: string;
   contact_number: string | null;
-  payment_status: string;
+  status: string;
   amount_paid: number;
   payment_slip_url: string | null;
 }
@@ -122,36 +122,10 @@ const EventDetail = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!event) return;
-    const fd = new FormData(e.currentTarget);
-    const parsed = attendeeSchema.safeParse({
-      student_name: String(fd.get("student_name") ?? ""),
-      contact_number: String(fd.get("contact_number") ?? ""),
-    });
-    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
-
-    setAdding(true);
-    try {
-      await AttendeeService.createAttendee(event.id, {
-        student_name: parsed.data.student_name,
-        contact_number: parsed.data.contact_number || undefined,
-      });
-      toast.success("Student added");
-      load(); // Reload data
-      (e.target as HTMLFormElement).reset();
-    } catch (error) {
-      console.error("Failed to add attendee:", error);
-      toast.error("Failed to add student");
-    } finally {
-      setAdding(false);
-    }
-  };
-
   const togglePaid = async (a: Attendee) => {
     if (!event) return;
-    const nextStatus = a.payment_status === "paid" ? "pending" : "approved";
+    const nextStatus = a.status === "approved" ? "unpaid" : "approved";
+    const amount = nextStatus === "approved" ? Number(event.price_per_head) : 0;
     
     // Optimistic update
     setAttendees((prev) =>
@@ -159,16 +133,16 @@ const EventDetail = () => {
         x.id === a.id
           ? {
               ...x,
-              payment_status: nextStatus === "approved" ? "paid" : "pending",
-              amount_paid: nextStatus === "approved" ? Number(event.price_per_head) : 0,
+              status: nextStatus,
+              amount_paid: amount
             }
           : x,
       ),
     );
 
     try {
-      await AttendeeService.updateAttendeeStatus(a.id, nextStatus);
-      toast.success(nextStatus === "approved" ? "Marked paid" : "Marked pending");
+      await AttendeeService.updateAttendeeStatus(a.id, nextStatus, amount);
+      toast.success(nextStatus === "approved" ? "Marked paid" : "Marked unpaid");
     } catch (error) {
       console.error("Failed to update payment status:", error);
       toast.error("Couldn't update");
@@ -261,7 +235,7 @@ const EventDetail = () => {
       await JoinRequestService.rejectJoinRequest(r.id);
       
       if (r.payment_slip_url) {
-        await fetch('/api/delete-file', {
+        await fetch(`${API_BASE_URL}/api/delete-file`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: r.payment_slip_url }),
@@ -279,8 +253,8 @@ const EventDetail = () => {
   const downloadPDF = () => {
     if (!event) return;
     const doc = new jsPDF();
-    const paid = attendees.filter((a) => a.payment_status === "paid");
-    const collected = paid.reduce((s, a) => s + Number(a.amount_paid), 0);
+    const paid = attendees.filter((a) => a.status === "approved" || a.payment_slip_url);
+    const collected = paid.length * Number(event.price_per_head);
     const pendingAmt =
       (attendees.length - paid.length) * Number(event.price_per_head);
 
@@ -295,13 +269,16 @@ const EventDetail = () => {
     autoTable(doc, {
       startY: 50,
       head: [["#", "Student", "Contact", "Status", "Paid (Rs)"]],
-      body: attendees.map((a, i) => [
-        i + 1,
-        a.student_name,
-        a.contact_number || "-",
-        a.payment_status.toUpperCase(),
-        Number(a.amount_paid).toLocaleString(),
-      ]),
+      body: attendees.map((a, i) => {
+        const isPaid = a.status === "approved" || a.payment_slip_url;
+        return [
+          i + 1,
+          a.student_name,
+          a.contact_number || "-",
+          isPaid ? "PAID" : "PENDING",
+          isPaid ? Number(event.price_per_head).toLocaleString() : "0",
+        ];
+      }),
       headStyles: { fillColor: [200, 160, 60] },
     });
 
@@ -335,12 +312,10 @@ const EventDetail = () => {
     );
   }
 
-  const paidCount = attendees.filter((a) => a.payment_status === "paid").length;
-  const collected = attendees
-    .filter((a) => a.payment_status === "paid")
-    .reduce((s, a) => s + Number(a.amount_paid), 0);
-  const pendingAmt =
-    (attendees.length - paidCount) * Number(event.price_per_head);
+  const paidCount = attendees.filter((a) => a.status === "approved").length;
+  const collected = paidCount * Number(event.price_per_head);
+  const pendingCount = requests.length;
+  const pendingAmt = pendingCount * Number(event.price_per_head);
 
   return (
     <div className="space-y-6">
@@ -552,45 +527,6 @@ const EventDetail = () => {
         </div>
       )}
 
-      {/* Add attendee */}
-      <form
-        onSubmit={handleAdd}
-        className="surface-gradient rounded-2xl p-5 sm:p-6 hairline shadow-card"
-      >
-        <h2 className="font-display text-lg font-semibold mb-4">Add student</h2>
-        <div className="grid sm:grid-cols-[1fr_1fr_auto] gap-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="student_name">Name</Label>
-            <Input
-              id="student_name"
-              name="student_name"
-              required
-              maxLength={120}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="contact_number">Contact (optional)</Label>
-            <Input id="contact_number" name="contact_number" maxLength={40} />
-          </div>
-          <div className="flex items-end">
-            <Button
-              type="submit"
-              variant="hero"
-              disabled={adding}
-              className="w-full sm:w-auto"
-            >
-              {adding ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" /> Add
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </form>
-
       {/* Attendees list */}
       <div className="surface-gradient rounded-2xl hairline shadow-card overflow-hidden">
         <div className="p-6 border-b border-border flex items-center justify-between">
@@ -632,13 +568,13 @@ const EventDetail = () => {
                 </div>
 
                 <Button
-                  variant={a.payment_status === "paid" ? "gold" : "outline"}
+                  variant={a.status === "approved" ? "gold" : "outline"}
                   size="sm"
-                  onClick={() => togglePaid(a)}
-                  disabled={!!a.payment_slip_url}
+                  onClick={() => a.status !== "approved" && togglePaid(a)}
+                  disabled={a.status === "approved"}
                   className="min-w-[90px]"
                 >
-                  {a.payment_status === "paid" ? (
+                  {a.status === "approved" ? (
                     <>
                       <Check className="w-3.5 h-3.5" /> Paid
                     </>
