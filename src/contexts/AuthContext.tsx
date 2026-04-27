@@ -11,6 +11,7 @@ import bcrypt from "bcryptjs";
 interface Profile {
   display_name: string | null;
   avatar_url: string | null;
+  currency: string | null;
 }
 
 interface User {
@@ -49,7 +50,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           ...prev,
           profile: {
             display_name: profileData.display_name,
-            avatar_url: profileData.avatar_url
+            avatar_url: profileData.avatar_url,
+            currency: profileData.currency
           }
         } : null);
       }
@@ -69,9 +71,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             id: sessionData.user_id, 
             email: sessionData.email,
             profile: profileData ? {
-              display_name: profileData.display_name,
-              avatar_url: profileData.avatar_url
-            } : undefined
+            display_name: profileData.display_name,
+            avatar_url: profileData.avatar_url,
+            currency: profileData.currency
+          } : undefined
           });
           setSession({ token });
         } else {
@@ -126,7 +129,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email: userData.email,
       profile: profileData ? {
         display_name: profileData.display_name,
-        avatar_url: profileData.avatar_url
+        avatar_url: profileData.avatar_url,
+        currency: profileData.currency
       } : undefined
     });
     setSession({ token });

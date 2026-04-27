@@ -125,13 +125,13 @@ const Dashboard = () => {
             <StatCard
               icon={Wallet}
               label="Total earnings"
-              value={`Rs ${totals.earned.toLocaleString()}`}
+              value={`${user?.profile?.currency || 'USD'} ${totals.earned.toLocaleString()}`}
               accent
             />
             <StatCard
               icon={Clock}
               label="Pending"
-              value={`Rs ${totals.pending.toLocaleString()}`}
+              value={`${user?.profile?.currency || 'USD'} ${totals.pending.toLocaleString()}`}
             />
             <StatCard
               icon={Users}
@@ -279,6 +279,7 @@ const PackageDetails = ({ userPackage, eventsCount }: { userPackage: any, events
 };
 
 const EventCard = ({ event, index }: { event: EventRow; index: number }) => {
+  const { user } = useAuth();
   const filledPct =
     event.max_students > 0
       ? (event.attendees_count / event.max_students) * 100
@@ -359,7 +360,7 @@ const EventCard = ({ event, index }: { event: EventRow; index: number }) => {
               <div className="flex items-center gap-1.5 text-sm">
                 <TrendingUp className="w-3.5 h-3.5 text-gold" />
                 <span className="font-semibold">
-                  Rs {event.total_collected.toLocaleString()}
+                  {user?.profile?.currency || 'USD'} {event.total_collected.toLocaleString()}
                 </span>
               </div>
               {!isPast ? (

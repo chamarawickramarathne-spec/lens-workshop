@@ -264,12 +264,12 @@ const EventDetail = () => {
     doc.setFontSize(11);
     doc.setTextColor(100);
     doc.text(`Date: ${format(new Date(event.event_date), "PPP p")}`, 14, 28);
-    doc.text(`Price per head: Rs ${event.price_per_head}`, 14, 34);
+    doc.text(`Price per head: ${user?.profile?.currency || 'USD'} ${event.price_per_head}`, 14, 34);
     doc.text(`Capacity: ${attendees.length}/${event.max_students}`, 14, 40);
 
     autoTable(doc, {
       startY: 50,
-      head: [["#", "Student", "Contact", "Status", "Paid (Rs)"]],
+      head: [["#", "Student", "Contact", "Status", `Paid (${user?.profile?.currency || 'USD'})`]],
       body: attendees.map((a, i) => {
         const isPaid = a.status === "approved" || a.payment_slip_url;
         return [
@@ -286,8 +286,8 @@ const EventDetail = () => {
     const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.setFontSize(12);
     doc.setTextColor(0);
-    doc.text(`Total Collected: Rs ${collected.toLocaleString()}`, 14, finalY);
-    doc.text(`Pending: Rs ${pendingAmt.toLocaleString()}`, 14, finalY + 7);
+    doc.text(`Total Collected: ${user?.profile?.currency || 'USD'} ${collected.toLocaleString()}`, 14, finalY);
+    doc.text(`Pending: ${user?.profile?.currency || 'USD'} ${pendingAmt.toLocaleString()}`, 14, finalY + 7);
 
     doc.save(`${event.event_name.replace(/\s+/g, "-")}-report.pdf`);
   };
@@ -442,8 +442,8 @@ const EventDetail = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Stat icon={Users} label="Attendees" value={`${event.attendees_count}/${event.max_students}`} />
               <Stat icon={Check} label="Paid" value={String(paidCount)} />
-              <Stat icon={Wallet} label="Collected" value={`Rs ${collected.toLocaleString()}`} accent />
-              <Stat icon={Clock} label="Pending" value={`Rs ${pendingAmt.toLocaleString()}`} />
+              <Stat icon={Wallet} label="Collected" value={`${user?.profile?.currency || 'USD'} ${collected.toLocaleString()}`} accent />
+              <Stat icon={Clock} label="Pending" value={`${user?.profile?.currency || 'USD'} ${pendingAmt.toLocaleString()}`} />
             </div>
           </div>
         </div>
@@ -564,7 +564,7 @@ const EventDetail = () => {
 
                 <div className="hidden sm:block text-right">
                   <p className="text-sm font-semibold">
-                    Rs {Number(a.amount_paid).toLocaleString()}
+                    {user?.profile?.currency || 'USD'} {Number(a.amount_paid).toLocaleString()}
                   </p>
                 </div>
 

@@ -32,7 +32,10 @@ interface Event {
   event_date: string;
   end_date: string | null;
   price_per_head: number;
+  currency: string;
   notes: string | null;
+  attendees_count: number;
+  max_students: number;
 }
 
 const schema = z.object({
@@ -226,7 +229,7 @@ const Join = () => {
           <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hairline">
             <span className="text-sm">Fee:</span>
             <span className="font-semibold text-gold">
-              Rs {Number(event.price_per_head).toLocaleString()}
+              {event.currency || 'USD'} {Number(event.price_per_head).toLocaleString()}
             </span>
           </div>
         </div>

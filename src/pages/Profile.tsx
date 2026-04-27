@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Package,
   Crown,
+  Coins,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProfileService } from "@/integrations/mysql/services";
@@ -40,6 +41,7 @@ const Profile = () => {
     phone: "",
     address: "",
     avatar_url: "",
+    currency: "USD",
   });
 
   const load = async () => {
@@ -54,6 +56,7 @@ const Profile = () => {
           phone: data.phone || "",
           address: data.address || "",
           avatar_url: data.avatar_url || "",
+          currency: data.currency || "USD",
         });
       }
     } catch (err) {
@@ -250,6 +253,29 @@ const Profile = () => {
               onChange={(v) => setForm((f) => ({ ...f, address: v }))}
               placeholder="Your address"
             />
+            <div className="p-4 rounded-xl bg-secondary/20 border border-border/30 hover:border-gold/20 transition-colors">
+              <div className="flex items-center gap-2 mb-2">
+                <Coins className="w-3.5 h-3.5 text-gold/70" />
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                  Currency
+                </span>
+              </div>
+              {editing ? (
+                <select
+                  value={form.currency}
+                  onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
+                  className="w-full h-9 bg-secondary/40 border border-border/50 rounded-md text-sm px-3 focus:outline-none focus:ring-1 focus:ring-gold/50"
+                >
+                  <option value="USD">USD ($)</option>
+                  <option value="Rs">Rs (LKR)</option>
+                  <option value="LKR">LKR (Rs)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                </select>
+              ) : (
+                <p className="text-sm font-medium">{profile?.currency || "USD"}</p>
+              )}
+            </div>
           </div>
 
           {editing && (

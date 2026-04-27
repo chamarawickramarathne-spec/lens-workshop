@@ -60,11 +60,13 @@ export class EventService {
     const sql = `
       SELECT 
         e.*,
+        p.currency,
         COALESCE(stats.attendees_count, 0) as attendees_count,
         COALESCE(stats.approved_count, 0) as approved_count,
         COALESCE(stats.approved_count * e.price_per_head, 0) as total_collected,
         COALESCE(stats.pending_count * e.price_per_head, 0) as total_pending
       FROM events e
+      LEFT JOIN profiles p ON e.user_id = p.user_id
       LEFT JOIN (
         SELECT 
           event_id,
@@ -337,7 +339,7 @@ export class ProfileService {
     const sql = `
       SELECT 
         u.id, u.email, u.created_at as member_since,
-        p.display_name, p.phone, p.address, p.avatar_url,
+        p.display_name, p.phone, p.address, p.avatar_url, p.currency,
         pkg.name as package_name, pkg.max_workshops, pkg.max_students_per_workshop, pkg.max_slip_size_mb, pkg.price as package_price
       FROM users u
       LEFT JOIN profiles p ON u.id = p.user_id
@@ -353,10 +355,11 @@ export class ProfileService {
     phone?: string;
     address?: string;
     avatar_url?: string;
+    currency?: string;
   }) {
     const sql = `
       UPDATE profiles SET 
-        display_name = ?, phone = ?, address = ?, avatar_url = ?
+        display_name = ?, phone = ?, address = ?, avatar_url = ?, currency = ?
       WHERE user_id = ?
     `;
     return await Database.query(sql, [
@@ -364,6 +367,7 @@ export class ProfileService {
       data.phone || null,
       data.address || null,
       data.avatar_url || null,
+      data.currency || 'USD',
       userId
     ]);
   }

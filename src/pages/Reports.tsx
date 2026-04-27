@@ -129,14 +129,14 @@ const Reports = () => {
             <SummaryCard
               icon={Wallet}
               label="Total Earned"
-              value={`Rs ${Number(summary?.total_earned || 0).toLocaleString()}`}
+              value={`${user?.profile?.currency || 'USD'} ${Number(summary?.total_earned || 0).toLocaleString()}`}
               accent
               subtitle={periodLabel}
             />
             <SummaryCard
               icon={Clock}
               label="Pending"
-              value={`Rs ${Number(summary?.pending_amount || 0).toLocaleString()}`}
+              value={`${user?.profile?.currency || 'USD'} ${Number(summary?.pending_amount || 0).toLocaleString()}`}
               subtitle={`${summary?.pending_payments || 0} unpaid`}
             />
             <SummaryCard
@@ -195,7 +195,7 @@ const Reports = () => {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(40 12% 16%)" />
                     <XAxis dataKey="label" stroke="hsl(40 8% 42%)" fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis yAxisId="left" stroke="hsl(40 8% 42%)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `Rs ${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
+                    <YAxis yAxisId="left" stroke="hsl(40 8% 42%)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `${user?.profile?.currency || 'USD'} ${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
                     <YAxis yAxisId="right" orientation="right" stroke="hsl(40 8% 42%)" fontSize={11} tickLine={false} axisLine={false} />
                     <Tooltip content={<CustomTooltip />} />
                     <Area yAxisId="left" type="monotone" dataKey="earned" stroke="hsl(43 74% 58%)" fill="url(#goldGrad)" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(43 74% 58%)" }} />
@@ -301,7 +301,7 @@ const Reports = () => {
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-bold">{Number(ws.student_count)}</p>
-                        <p className="text-[10px] text-muted-foreground">Rs {Number(ws.earned).toLocaleString()}</p>
+                        <p className="text-[10px] text-muted-foreground">{user?.profile?.currency || 'USD'} {Number(ws.earned).toLocaleString()}</p>
                       </div>
                     </Link>
                   ))}
@@ -359,7 +359,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           <span className="w-2.5 h-2.5 rounded-sm" style={{ background: p.stroke }} />
           <span className="text-muted-foreground capitalize">{p.dataKey}:</span>
           <span className="font-bold">
-            {p.dataKey === "earned" ? `Rs ${Number(p.value).toLocaleString()}` : p.value}
+            {p.dataKey === "earned" ? `${user?.profile?.currency || 'USD'} ${Number(p.value).toLocaleString()}` : p.value}
           </span>
         </div>
       ))}
