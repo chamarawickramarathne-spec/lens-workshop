@@ -57,7 +57,18 @@ export class EventService {
   }
 
   static async getEventById(eventId: string) {
-    const sql = 'SELECT * FROM events WHERE id = ?';
+    const sql = `
+      SELECT 
+        e.*,
+        COUNT(CASE WHEN a.status IN ('approved', 'unpaid', 'pending') THEN 1 END) as attendees_count,
+        COUNT(CASE WHEN a.status = 'approved' THEN 1 END) as approved_count,
+        COALESCE(SUM(CASE WHEN a.status = 'approved' THEN e.price_per_head ELSE 0 END), 0) as total_collected,
+        COUNT(CASE WHEN a.status = 'pending' THEN 1 END) * e.price_per_head as total_pending
+      FROM events e
+      LEFT JOIN join_requests a ON e.id = a.event_id
+      WHERE e.id = ?
+      GROUP BY e.id
+    `;
     const result = await Database.query(sql, [eventId]);
     return Array.isArray(result) ? result[0] : null;
   }
