@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { GraduationCap, LogOut, LayoutDashboard, CalendarPlus, BarChart3 } from "lucide-react";
+import { GraduationCap, LogOut, LayoutDashboard, CalendarPlus, BarChart3, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/reports", label: "Reports", icon: BarChart3 },
     { to: "/events/new", label: "New Workshop", icon: CalendarPlus },
+    { to: "/profile", label: "Profile", icon: User },
   ];
 
   return (
@@ -56,9 +57,27 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
           </nav>
 
           <div className="flex items-center gap-3">
-            <span className="hidden sm:inline text-sm text-muted-foreground">
-              {user?.email}
-            </span>
+            <Link 
+              to="/profile" 
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-secondary transition-colors text-sm text-muted-foreground hover:text-foreground group"
+            >
+              <div className="w-7 h-7 rounded-full overflow-hidden bg-secondary border border-border/50 group-hover:border-gold/30 transition-colors">
+                {user?.profile?.avatar_url ? (
+                  <img 
+                    src={user.profile.avatar_url} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full grid place-items-center">
+                    <User className="w-4 h-4 text-gold/60" />
+                  </div>
+                )}
+              </div>
+              <span className="font-medium">
+                {user?.profile?.display_name || user?.email.split('@')[0]}
+              </span>
+            </Link>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Sign out</span>

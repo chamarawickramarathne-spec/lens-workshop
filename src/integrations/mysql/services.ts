@@ -315,3 +315,62 @@ export class ReportService {
     return await Database.query(sql, [userId]);
   }
 }
+
+// Database functions for user profile
+export class ProfileService {
+  static async getFullProfile(userId: string) {
+    const sql = `
+      SELECT 
+        u.id, u.email, u.created_at as member_since,
+        p.display_name, p.phone, p.address, p.avatar_url,
+        pkg.name as package_name, pkg.max_workshops, pkg.max_students_per_workshop, pkg.max_slip_size_mb, pkg.price as package_price
+      FROM users u
+      LEFT JOIN profiles p ON u.id = p.user_id
+      LEFT JOIN packages pkg ON u.package_id = pkg.id
+      WHERE u.id = ?
+    `;
+    const result = await Database.query(sql, [userId]);
+    return Array.isArray(result) ? result[0] : null;
+  }
+
+  static async updateProfile(userId: string, data: {
+    display_name?: string;
+    phone?: string;
+    address?: string;
+    avatar_url?: string;
+  }) {
+    const sql = `
+      UPDATE profiles SET 
+        display_name = ?, phone = ?, address = ?, avatar_url = ?
+      WHERE user_id = ?
+    `;
+    return await Database.query(sql, [
+      data.display_name || null,
+      data.phone || null,
+      data.address || null,
+      data.avatar_url || null,
+      userId
+    ]);
+  }
+
+  static async getAllUploadedFiles(userId: string) {
+    const sql = `
+      SELECT DISTINCT file_url FROM (
+        SELECT image_url as file_url FROM events WHERE user_id = ? AND image_url IS NOT NULL AND image_url != ''
+        UNION ALL
+        SELECT jr.payment_slip_url as file_url FROM join_requests jr
+        JOIN events e ON jr.event_id = e.id
+        WHERE e.user_id = ? AND jr.payment_slip_url IS NOT NULL AND jr.payment_slip_url != ''
+        UNION ALL
+        SELECT avatar_url as file_url FROM profiles WHERE user_id = ? AND avatar_url IS NOT NULL AND avatar_url != ''
+      ) all_files
+    `;
+    return await Database.query(sql, [userId, userId, userId]);
+  }
+
+  static async deleteAccount(userId: string) {
+    // CASCADE will handle events, join_requests, profiles, sessions
+    const sql = 'DELETE FROM users WHERE id = ?';
+    return await Database.query(sql, [userId]);
+  }
+}

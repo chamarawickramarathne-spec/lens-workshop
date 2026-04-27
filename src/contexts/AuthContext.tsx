@@ -8,9 +8,15 @@ import {
 import { Database } from "@/integrations/mysql/client";
 import bcrypt from "bcryptjs";
 
+interface Profile {
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
 interface User {
   id: string;
   email: string;
+  profile?: Profile;
 }
 
 interface AuthContextValue {
@@ -20,6 +26,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -33,13 +40,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkSession();
   }, []);
 
+  const refreshProfile = async () => {
+    if (!user) return;
+    try {
+      const profileData = await Database.getProfile(user.id);
+      if (profileData) {
+        setUser(prev => prev ? {
+          ...prev,
+          profile: {
+            display_name: profileData.display_name,
+            avatar_url: profileData.avatar_url
+          }
+        } : null);
+      }
+    } catch (error) {
+      console.error("Failed to refresh profile:", error);
+    }
+  };
+
   const checkSession = async () => {
     const token = localStorage.getItem("session_token");
     if (token) {
       try {
         const sessionData = await Database.getSessionByToken(token);
         if (sessionData) {
-          setUser({ id: sessionData.user_id, email: sessionData.email });
+          const profileData = await Database.getProfile(sessionData.user_id);
+          setUser({ 
+            id: sessionData.user_id, 
+            email: sessionData.email,
+            profile: profileData ? {
+              display_name: profileData.display_name,
+              avatar_url: profileData.avatar_url
+            } : undefined
+          });
           setSession({ token });
         } else {
           localStorage.removeItem("session_token");
@@ -87,7 +120,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await Database.createSession(userData.id, token, expiresAt);
     localStorage.setItem("session_token", token);
 
-    setUser({ id: userData.id, email: userData.email });
+    const profileData = await Database.getProfile(userData.id);
+    setUser({ 
+      id: userData.id, 
+      email: userData.email,
+      profile: profileData ? {
+        display_name: profileData.display_name,
+        avatar_url: profileData.avatar_url
+      } : undefined
+    });
     setSession({ token });
   };
 
@@ -125,7 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, loading, signIn, signUp, signOut }}
+      value={{ user, session, loading, signIn, signUp, signOut, refreshProfile }}
     >
       {children}
     </AuthContext.Provider>

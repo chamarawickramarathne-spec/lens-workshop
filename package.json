@@ -60,6 +60,7 @@
     "multer": "^2.1.1",
     "mysql2": "^3.11.4",
     "next-themes": "^0.3.0",
+    "nodemailer": "^8.0.7",
     "nodemon": "^3.1.14",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",

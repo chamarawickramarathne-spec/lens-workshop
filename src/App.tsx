@@ -14,6 +14,7 @@ import EventDetail from "./pages/EventDetail.tsx";
 import EditEvent from "./pages/EditEvent.tsx";
 import Join from "./pages/Join.tsx";
 import Reports from "./pages/Reports.tsx";
+import Profile from "./pages/Profile.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/events/:id" element={<Protected><EventDetail /></Protected>} />
             <Route path="/events/:id/edit" element={<Protected><EditEvent /></Protected>} />
             <Route path="/reports" element={<Protected><Reports /></Protected>} />
+            <Route path="/profile" element={<Protected><Profile /></Protected>} />
             <Route path="/join/:id" element={<Join />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
