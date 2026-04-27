@@ -6,22 +6,16 @@
   RewriteCond %{HTTPS} off
   RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-  # If you are using a Node.js process manager like Passenger
-  # or if your host points to server.js automatically, 
-  # usually no additional rules are needed here.
-
-  # If you are serving the React app statically via Apache
-  # and only proxying the /api and /uploads to Node:
-  # RewriteRule ^api/(.*) http://localhost:3001/api/$1 [P,L]
-  # RewriteRule ^uploads/(.*) http://localhost:3001/uploads/$1 [P,L]
+  # Proxy /api and /uploads to the Node.js backend
+  # Note: 3001 is the default port set in your server.js
+  RewriteRule ^api/(.*) http://localhost:3001/api/$1 [P,L]
+  RewriteRule ^uploads/(.*) http://localhost:3001/uploads/$1 [P,L]
 
   # Standard React Router handling:
   # Always serve index.html for any route that isn't a physical file
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_URI} !^/api/
-  RewriteCond %{REQUEST_URI} !^/uploads/
   RewriteRule . /index.html [L]
 </IfModule>
 

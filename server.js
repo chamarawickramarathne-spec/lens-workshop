@@ -20,7 +20,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const isProduction = process.env.NODE_ENV === 'production' || !!process.env.PROD_DB_USER;
+const isProduction = process.env.NODE_ENV === 'production';
 
 const dbConfig = isProduction ? {
   host: process.env.PROD_DB_HOST || 'localhost',

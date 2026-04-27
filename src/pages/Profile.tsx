@@ -21,6 +21,7 @@ import { ProfileService } from "@/integrations/mysql/services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/api";
 
 const Profile = () => {
