@@ -4,24 +4,24 @@ import { Database } from './client';
 export class EventService {
   static async getEventsByUser(userId: string) {
     const sql = `
-      SELECT
-        e.id,
-        e.event_name,
-        e.event_date,
-        e.price_per_head,
-        e.max_students,
-        e.location,
-        e.image_url,
-        e.for_whom,
-        e.end_date,
-        COUNT(CASE WHEN a.status IN ('approved', 'unpaid', 'pending') THEN 1 END) as attendees_count,
-        COUNT(CASE WHEN a.status = 'approved' THEN 1 END) as approved_count,
-        COALESCE(SUM(CASE WHEN a.status = 'approved' THEN e.price_per_head ELSE 0 END), 0) as total_collected,
-        COUNT(CASE WHEN a.status = 'pending' THEN 1 END) * e.price_per_head as total_pending
+      SELECT 
+        e.*,
+        COALESCE(stats.attendees_count, 0) as attendees_count,
+        COALESCE(stats.approved_count, 0) as approved_count,
+        COALESCE(stats.approved_count * e.price_per_head, 0) as total_collected,
+        COALESCE(stats.pending_count * e.price_per_head, 0) as total_pending
       FROM events e
-      LEFT JOIN join_requests a ON e.id = a.event_id
+      LEFT JOIN (
+        SELECT 
+          event_id,
+          COUNT(*) as attendees_count,
+          COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count,
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count
+        FROM join_requests
+        WHERE status != 'rejected'
+        GROUP BY event_id
+      ) stats ON e.id = stats.event_id
       WHERE e.user_id = ?
-      GROUP BY e.id, e.event_name, e.event_date, e.price_per_head, e.max_students, e.location, e.image_url, e.for_whom, e.end_date
       ORDER BY e.event_date DESC
     `;
     return await Database.query(sql, [userId]);
@@ -60,14 +60,22 @@ export class EventService {
     const sql = `
       SELECT 
         e.*,
-        COUNT(CASE WHEN a.status IN ('approved', 'unpaid', 'pending') THEN 1 END) as attendees_count,
-        COUNT(CASE WHEN a.status = 'approved' THEN 1 END) as approved_count,
-        COALESCE(SUM(CASE WHEN a.status = 'approved' THEN e.price_per_head ELSE 0 END), 0) as total_collected,
-        COUNT(CASE WHEN a.status = 'pending' THEN 1 END) * e.price_per_head as total_pending
+        COALESCE(stats.attendees_count, 0) as attendees_count,
+        COALESCE(stats.approved_count, 0) as approved_count,
+        COALESCE(stats.approved_count * e.price_per_head, 0) as total_collected,
+        COALESCE(stats.pending_count * e.price_per_head, 0) as total_pending
       FROM events e
-      LEFT JOIN join_requests a ON e.id = a.event_id
+      LEFT JOIN (
+        SELECT 
+          event_id,
+          COUNT(*) as attendees_count,
+          COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count,
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count
+        FROM join_requests
+        WHERE status != 'rejected'
+        GROUP BY event_id
+      ) stats ON e.id = stats.event_id
       WHERE e.id = ?
-      GROUP BY e.id
     `;
     const result = await Database.query(sql, [eventId]);
     return Array.isArray(result) ? result[0] : null;
@@ -223,17 +231,24 @@ export class ReportService {
     const sql = `
       SELECT
         COUNT(DISTINCT e.id) as total_workshops,
-        COALESCE(SUM(CASE WHEN a.status = 'approved' THEN e.price_per_head ELSE 0 END), 0) as total_earned,
-        COALESCE(COUNT(CASE WHEN a.status = 'approved' THEN 1 END), 0) as total_students,
-        COALESCE(COUNT(CASE WHEN a.status = 'pending' THEN 1 END), 0) as pending_requests,
-        COALESCE(SUM(CASE WHEN a.status = 'pending' THEN e.price_per_head END), 0) as pending_amount,
-        COALESCE(COUNT(CASE WHEN a.status = 'approved' THEN 1 END), 0) as approved_students
+        COALESCE(SUM(stats.approved_count * e.price_per_head), 0) as total_earned,
+        COALESCE(SUM(stats.approved_count), 0) as total_students,
+        COALESCE(SUM(stats.pending_count), 0) as pending_requests,
+        COALESCE(SUM(stats.pending_count * e.price_per_head), 0) as pending_amount,
+        COALESCE(SUM(stats.approved_count), 0) as approved_students
       FROM events e
-      LEFT JOIN join_requests a ON e.id = a.event_id
+      LEFT JOIN (
+        SELECT 
+          event_id,
+          COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count,
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count
+        FROM join_requests
+        GROUP BY event_id
+      ) stats ON e.id = stats.event_id
       WHERE e.user_id = ? ${dateFilter}
     `;
-    const result = await Database.query(sql, [userId]);
-    return Array.isArray(result) ? result[0] : null;
+    const results = await Database.query(sql, [userId]);
+    return Array.isArray(results) ? results[0] : null;
   }
 
   static async getEarningsOverTime(userId: string, period: 'week' | 'month' | 'year') {

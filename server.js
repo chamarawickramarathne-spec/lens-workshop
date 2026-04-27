@@ -16,8 +16,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// AUTO-DETECT DATABASE: Use Production if PROD_DB_USER is set, otherwise use Local
-const useProd = !!process.env.PROD_DB_USER;
+// AUTO-DETECT DATABASE: Use Production if NODE_ENV is production OR if running on cPanel (LS_NODE_SERVER_PORT exists)
+const useProd = (process.env.NODE_ENV === 'production' || !!process.env.LS_NODE_SERVER_PORT) && !!process.env.PROD_DB_USER;
 
 const dbConfig = useProd ? {
   host: process.env.PROD_DB_HOST || 'localhost',

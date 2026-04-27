@@ -20,6 +20,7 @@ import {
   ExternalLink,
   X,
   Pencil,
+  CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -439,7 +440,7 @@ const EventDetail = () => {
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <Stat icon={Users} label="Attendees" value={`${attendees.length}/${event.max_students}`} />
+              <Stat icon={Users} label="Attendees" value={`${event.attendees_count}/${event.max_students}`} />
               <Stat icon={Check} label="Paid" value={String(paidCount)} />
               <Stat icon={Wallet} label="Collected" value={`Rs ${collected.toLocaleString()}`} accent />
               <Stat icon={Clock} label="Pending" value={`Rs ${pendingAmt.toLocaleString()}`} />
