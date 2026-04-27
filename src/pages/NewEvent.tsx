@@ -5,6 +5,7 @@ import { ArrowLeft, Loader2, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EventService } from "@/integrations/mysql/services";
 import { Button } from "@/components/ui/button";
+import { API_BASE_URL } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -80,7 +81,7 @@ const NewEvent = () => {
       const uploadFd = new FormData();
       uploadFd.append("file", file);
       
-      const uploadRes = await fetch("/api/upload", {
+      const uploadRes = await fetch(`${API_BASE_URL}/api/upload`, {
         method: "POST",
         body: uploadFd,
       });

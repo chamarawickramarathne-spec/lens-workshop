@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ArrowLeft, Loader2, Plus, ImageIcon } from "lucide-react";
 import { EventService } from "@/integrations/mysql/services";
 import { Button } from "@/components/ui/button";
+import { API_BASE_URL } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -105,7 +106,7 @@ const EditEvent = () => {
       if (file) {
         const uploadFd = new FormData();
         uploadFd.append("file", file);
-        const uploadRes = await fetch("/api/upload", { method: "POST", body: uploadFd });
+        const uploadRes = await fetch(`${API_BASE_URL}/api/upload`, { method: "POST", body: uploadFd });
         if (!uploadRes.ok) throw new Error("Upload failed");
         const { url } = await uploadRes.json();
         imageUrl = url;

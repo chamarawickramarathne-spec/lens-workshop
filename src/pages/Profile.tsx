@@ -21,7 +21,7 @@ import { ProfileService } from "@/integrations/mysql/services";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { API_BASE_URL } from "@/lib/api";
 
 const Profile = () => {
   const { user, signOut, refreshProfile } = useAuth();
@@ -72,7 +72,7 @@ const Profile = () => {
     const fd = new FormData();
     fd.append("file", file);
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const res = await fetch(`${API_BASE_URL}/api/upload`, { method: "POST", body: fd });
       const data = await res.json();
       if (data.url) {
         setForm((f) => ({ ...f, avatar_url: data.url }));
@@ -103,7 +103,7 @@ const Profile = () => {
     if (!user || deleteConfirm !== "DELETE") return;
     setDeleting(true);
     try {
-      const res = await fetch("/api/delete-account", {
+      const res = await fetch(`${API_BASE_URL}/api/delete-account`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id }),

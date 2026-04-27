@@ -20,7 +20,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const dbConfig = {
+const isProduction = process.env.NODE_ENV === 'production' || !!process.env.PROD_DB_USER;
+
+const dbConfig = isProduction ? {
+  host: process.env.PROD_DB_HOST || 'localhost',
+  user: process.env.PROD_DB_USER,
+  password: process.env.PROD_DB_PASS,
+  database: process.env.PROD_DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+} : {
   host: process.env.VITE_DB_HOST || 'localhost',
   user: process.env.VITE_DB_USER || 'root',
   password: process.env.VITE_DB_PASSWORD || '',
@@ -29,6 +39,12 @@ const dbConfig = {
   connectionLimit: 10,
   queueLimit: 0
 };
+
+if (isProduction) {
+  console.log('Using PRODUCTION database configuration');
+} else {
+  console.log('Using LOCAL database configuration');
+}
 
 const pool = mysql.createPool(dbConfig);
 
@@ -196,3 +212,16 @@ app.post('/api/query', async (req, res) => {
 app.listen(port, () => {
   console.log(`Backend server running on http://localhost:${port}`);
 });
+
+// Serve static files from the React app in production
+if (isProduction) {
+  const distPath = path.join(__dirname, 'dist');
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
+        res.sendFile(path.join(distPath, 'index.html'));
+      }
+    });
+  }
+}

@@ -1,7 +1,8 @@
-// Database helper functions
+import { API_BASE_URL } from "@/lib/api";
+
 export class Database {
   static async query(sql: string, params: any[] = []) {
-    const response = await fetch('/api/query', {
+    const response = await fetch(`${API_BASE_URL}/api/query`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
