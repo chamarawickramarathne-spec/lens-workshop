@@ -63,6 +63,7 @@ export class EventService {
         p.display_name as photographer_name,
         p.avatar_url as photographer_avatar,
         p.phone as photographer_phone,
+        p.currency as photographer_currency,
         u.email as photographer_email,
         COALESCE(stats.attendees_count, 0) as attendees_count,
         COALESCE(stats.approved_count, 0) as approved_count,

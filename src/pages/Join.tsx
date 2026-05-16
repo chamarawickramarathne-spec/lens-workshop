@@ -43,6 +43,7 @@ interface Event {
   photographer_name?: string;
   photographer_avatar?: string;
   photographer_phone?: string;
+  photographer_currency?: string;
   photographer_email?: string;
 }
 
@@ -317,7 +318,7 @@ const Join = () => {
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hairline">
                   <span className="text-sm text-muted-foreground">Fee:</span>
                   <span className="font-semibold text-gold">
-                    {event.currency || "USD"}{" "}
+                    {event.photographer_currency || event.currency || "USD"}{" "}
                     {Number(event.price_per_head).toLocaleString()}
                   </span>
                 </div>
@@ -564,7 +565,7 @@ const Join = () => {
                         </div>
                         <div className="pt-1">
                           <span className="text-xs font-semibold text-gold">
-                            {event?.currency || "USD"} {Number(ev.price_per_head).toLocaleString()}
+                            {event?.photographer_currency || event?.currency || "USD"} {Number(ev.price_per_head).toLocaleString()}
                           </span>
                         </div>
                       </div>
