@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { z } from "zod";
 import {
@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   ImageIcon,
   Lock,
+  MapPin,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -34,6 +36,7 @@ interface Event {
   price_per_head: number;
   currency: string;
   notes: string | null;
+  location: string | null;
   attendees_count: number;
   max_students: number;
   image_url?: string;
@@ -41,6 +44,20 @@ interface Event {
   photographer_avatar?: string;
   photographer_phone?: string;
   photographer_email?: string;
+}
+
+interface PublicEvent {
+  id: string;
+  event_name: string;
+  event_date: string;
+  end_date: string | null;
+  price_per_head: number;
+  location: string | null;
+  image_url?: string;
+  for_whom?: string;
+  max_students: number;
+  attendees_count: number;
+  approved_count: number;
 }
 
 const schema = z.object({
@@ -52,7 +69,9 @@ const schema = z.object({
 
 const Join = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [event, setEvent] = useState<Event | null>(null);
+  const [otherEvents, setOtherEvents] = useState<PublicEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -63,8 +82,14 @@ const Join = () => {
     (async () => {
       if (!id) return;
       try {
-        const eventData = await EventService.getEventById(id);
+        const [eventData, allEvents] = await Promise.all([
+          EventService.getEventById(id),
+          EventService.getPublicEvents(),
+        ]);
         setEvent(eventData as Event | null);
+        if (Array.isArray(allEvents)) {
+          setOtherEvents((allEvents as PublicEvent[]).filter((e) => e.id !== id));
+        }
       } catch (error) {
         console.error("Failed to load event:", error);
       } finally {
@@ -272,6 +297,12 @@ const Join = () => {
                   </div>
                 </div>
               </div>
+              {event.location && (
+                <div className="flex items-start gap-2 mt-2 text-sm sm:text-base text-muted-foreground">
+                  <MapPin className="w-4 h-4 shrink-0 mt-0.5 text-gold/70" />
+                  <span className="text-foreground">{event.location}</span>
+                </div>
+              )}
               {event.notes && (
                 <div className="mt-5 p-4 bg-secondary/30 rounded-xl border border-border/50">
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -454,9 +485,99 @@ const Join = () => {
           </Button>
         </form>
 
-        <p className="text-center text-xs text-muted-foreground pb-8">
+        <p className="text-center text-xs text-muted-foreground pb-4">
           Powered by <span className="font-display">Workshop Manager</span>
         </p>
+
+        {otherEvents.length > 0 && (
+          <section className="pb-12">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-xl font-semibold">Other Workshops</h2>
+              <span className="text-xs text-muted-foreground">{otherEvents.length} found</span>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {otherEvents.map((ev) => {
+                const parseLocal = (d: string) => new Date(d.replace(" ", "T"));
+                const start = parseLocal(ev.event_date);
+                const endDate = ev.end_date ? parseLocal(ev.end_date) : null;
+                const isExpired = new Date(endDate || start) < new Date();
+                const isFull = ev.attendees_count >= ev.max_students;
+                const capacityPct = ev.max_students > 0
+                  ? Math.min(100, (ev.attendees_count / ev.max_students) * 100)
+                  : 0;
+
+                return (
+                  <button
+                    key={ev.id}
+                    onClick={() => navigate(`/join/${ev.id}`)}
+                    className="group text-left surface-gradient rounded-xl hairline shadow-card overflow-hidden hover:border-gold/40 transition-all duration-200 hover:shadow-lg w-full"
+                  >
+                    <div className="flex gap-0">
+                      {ev.image_url ? (
+                        <div className="w-28 sm:w-32 shrink-0 overflow-hidden">
+                          <img
+                            src={ev.image_url}
+                            alt={ev.event_name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-28 sm:w-32 shrink-0 bg-secondary/50 grid place-items-center">
+                          <ImageIcon className="w-8 h-8 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0 p-4 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-gold transition-colors">
+                            {ev.event_name}
+                          </p>
+                          {(isExpired || isFull) && (
+                            <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground hairline">
+                              {isFull ? "Full" : "Ended"}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Calendar className="w-3 h-3 text-gold/60 shrink-0" />
+                          <span>{format(start, "MMM do, yyyy")}</span>
+                        </div>
+                        {ev.location && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <MapPin className="w-3 h-3 text-gold/60 shrink-0" />
+                            <span className="truncate">{ev.location}</span>
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                            <div className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              <span>Capacity</span>
+                            </div>
+                            <span>{ev.attendees_count}/{ev.max_students}</span>
+                          </div>
+                          <div className="h-1 rounded-full bg-secondary overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gold transition-all"
+                              style={{ width: `${capacityPct}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-xs font-semibold text-gold">
+                            {event?.currency || "USD"} {Number(ev.price_per_head).toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {ev.approved_count}/{ev.max_students} paid
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );

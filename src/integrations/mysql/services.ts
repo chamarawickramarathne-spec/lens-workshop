@@ -88,7 +88,24 @@ export class EventService {
   }
 
   static async getPublicEvents() {
-    const sql = 'SELECT id, event_name, event_date, end_date, price_per_head, notes, location, image_url, for_whom FROM events ORDER BY event_date DESC';
+    const sql = `
+      SELECT
+        e.id, e.event_name, e.event_date, e.end_date, e.price_per_head,
+        e.notes, e.location, e.image_url, e.for_whom, e.max_students,
+        COALESCE(stats.attendees_count, 0) as attendees_count,
+        COALESCE(stats.approved_count, 0) as approved_count
+      FROM events e
+      LEFT JOIN (
+        SELECT
+          event_id,
+          COUNT(*) as attendees_count,
+          COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count
+        FROM join_requests
+        WHERE status != 'rejected'
+        GROUP BY event_id
+      ) stats ON e.id = stats.event_id
+      ORDER BY e.event_date DESC
+    `;
     return await Database.query(sql);
   }
 
