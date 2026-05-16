@@ -22,14 +22,17 @@ const schema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
-// Convert "YYYY-MM-DD HH:mm:ss" → "YYYY-MM-DDTHH:mm" for datetime-local inputs
+// Convert DB local string → input local string
 const toInputValue = (dateStr?: string | null) => {
   if (!dateStr) return "";
   return dateStr.replace(" ", "T").slice(0, 16);
 };
 
-const toDbDate = (dateStr: string) =>
-  new Date(dateStr).toISOString().slice(0, 19).replace("T", " ");
+// Convert input local string → DB local string
+const toDbDate = (dateStr: string) => {
+  if (!dateStr) return "";
+  return dateStr.replace("T", " ") + ":00";
+};
 
 const EditEvent = () => {
   const { id } = useParams<{ id: string }>();

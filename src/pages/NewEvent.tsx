@@ -90,8 +90,10 @@ const NewEvent = () => {
       const { url: imageUrl } = await uploadRes.json();
 
       // 2. Create event
-      const formatDate = (dateStr: string) => 
-        new Date(dateStr).toISOString().slice(0, 19).replace("T", " ");
+      const formatDate = (dateStr: string) => {
+        if (!dateStr) return "";
+        return dateStr.replace("T", " ") + ":00";
+      };
 
       await EventService.createEvent(user.id, {
         event_name: parsed.data.event_name,

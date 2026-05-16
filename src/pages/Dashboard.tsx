@@ -95,9 +95,15 @@ const Dashboard = () => {
     const earned = events.reduce((s, e) => s + e.total_collected, 0);
     const pending = events.reduce((s, e) => s + e.total_pending, 0);
     const students = events.reduce((s, e) => s + e.attendees_count, 0);
+    
+    const parseLocal = (d: string) => {
+      if (!d) return new Date();
+      return new Date(d.replace(" ", "T"));
+    };
+
     const now = new Date();
-    const active = events.filter((e) => new Date(e.event_date) >= now).length;
-    const completed = events.filter((e) => new Date(e.event_date) < now).length;
+    const active = events.filter((e) => parseLocal(e.event_date) >= now).length;
+    const completed = events.filter((e) => parseLocal(e.event_date) < now).length;
     return { earned, pending, students, active, completed };
   }, [events]);
 
@@ -329,7 +335,10 @@ const EventCard = ({ event, index }: { event: EventRow; index: number }) => {
             <div className="space-y-1">
               <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
                 <Calendar className="w-3 h-3 text-gold/70" />
-                {format(new Date(event.event_date), "PPP")}
+                {(() => {
+                  const d = new Date(event.event_date.replace(" ", "T"));
+                  return format(d, "PPP");
+                })()}
               </p>
               {event.location && (
                 <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 truncate">

@@ -243,21 +243,54 @@ const Join = () => {
               <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
                 {event.event_name}
               </h1>
-              <p className="text-sm sm:text-base text-muted-foreground mt-3 flex items-start sm:items-center gap-2">
-                <Calendar className="w-4 h-4 shrink-0 mt-0.5 sm:mt-0" />
-                {format(new Date(event.event_date), "PPPP 'at' p")}
-              </p>
+              <div className="text-sm sm:text-base text-muted-foreground mt-4 space-y-2">
+                <div className="flex items-start gap-2">
+                  <Calendar className="w-4 h-4 shrink-0 mt-1 text-gold/70" />
+                  <div>
+                    {(() => {
+                      const parseLocal = (d: string) => {
+                        return new Date(d.replace(" ", "T"));
+                      };
+                      const start = parseLocal(event.event_date);
+                      const end = event.end_date ? parseLocal(event.end_date) : null;
+                      
+                      return (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-gold/80 uppercase tracking-widest w-10">Start</span>
+                            <p className="text-foreground">{format(start, "PPPP 'at' p")}</p>
+                          </div>
+                          {end && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] font-bold text-gold/80 uppercase tracking-widest w-10">End</span>
+                              <p className="text-foreground">{format(end, "PPPP 'at' p")}</p>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
               {event.notes && (
                 <p className="text-sm text-muted-foreground mt-3">
                   {event.notes}
                 </p>
               )}
-              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hairline">
-                <span className="text-sm">Fee:</span>
-                <span className="font-semibold text-gold">
-                  {event.currency || "USD"}{" "}
-                  {Number(event.price_per_head).toLocaleString()}
-                </span>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hairline">
+                  <span className="text-sm text-muted-foreground">Fee:</span>
+                  <span className="font-semibold text-gold">
+                    {event.currency || "USD"}{" "}
+                    {Number(event.price_per_head).toLocaleString()}
+                  </span>
+                </div>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 hairline">
+                  <span className="text-sm text-muted-foreground">Slots Available:</span>
+                  <span className="font-semibold text-foreground">
+                    {Math.max(0, event.max_students - event.attendees_count)}
+                  </span>
+                </div>
               </div>
               {event.photographer_name && (
                 <div className="mt-4 p-4 bg-secondary/50 rounded-lg">

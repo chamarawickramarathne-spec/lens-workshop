@@ -390,7 +390,16 @@ const EventDetail = () => {
               </div>
               <div className="text-sm">
                 <p className="font-medium text-foreground">Timeline</p>
-                <p>{format(new Date(event.event_date), "PPP p")} — {event.end_date ? format(new Date(event.end_date), "PPP p") : "TBD"}</p>
+                <p>
+                  {(() => {
+                    const parseLocal = (d: string) => {
+                      return new Date(d.replace(" ", "T"));
+                    };
+                    const start = parseLocal(event.event_date);
+                    const end = event.end_date ? parseLocal(event.end_date) : null;
+                    return `${format(start, "PPP p")} — ${end ? format(end, "PPP p") : "TBD"}`;
+                  })()}
+                </p>
               </div>
             </div>
 

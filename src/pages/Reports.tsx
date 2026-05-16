@@ -296,7 +296,10 @@ const Reports = () => {
                           {ws.event_name}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          {ws.for_whom || "General"} · {format(new Date(ws.event_date), "PP")}
+                          {ws.for_whom || "General"} · {(() => {
+                            const d = new Date(ws.event_date.replace(" ", "T"));
+                            return format(d, "PP");
+                          })()}
                         </p>
                       </div>
                       <div className="text-right shrink-0">
