@@ -60,13 +60,17 @@ export class EventService {
     const sql = `
       SELECT 
         e.*,
-        p.currency,
+        p.display_name as photographer_name,
+        p.avatar_url as photographer_avatar,
+        p.phone as photographer_phone,
+        u.email as photographer_email,
         COALESCE(stats.attendees_count, 0) as attendees_count,
         COALESCE(stats.approved_count, 0) as approved_count,
         COALESCE(stats.approved_count * e.price_per_head, 0) as total_collected,
         COALESCE(stats.pending_count * e.price_per_head, 0) as total_pending
       FROM events e
       LEFT JOIN profiles p ON e.user_id = p.user_id
+      LEFT JOIN users u ON e.user_id = u.id
       LEFT JOIN (
         SELECT 
           event_id,

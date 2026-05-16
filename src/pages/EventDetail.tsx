@@ -88,6 +88,7 @@ const attendeeSchema = z.object({
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [requests, setRequests] = useState<JoinRequest[]>([]);

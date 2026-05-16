@@ -197,7 +197,7 @@ const Reports = () => {
                     <XAxis dataKey="label" stroke="hsl(40 8% 42%)" fontSize={11} tickLine={false} axisLine={false} />
                     <YAxis yAxisId="left" stroke="hsl(40 8% 42%)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `${user?.profile?.currency || 'USD'} ${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`} />
                     <YAxis yAxisId="right" orientation="right" stroke="hsl(40 8% 42%)" fontSize={11} tickLine={false} axisLine={false} />
-                    <Tooltip content={<CustomTooltip />} />
+                    <Tooltip content={<CustomTooltip currency={user?.profile?.currency || 'USD'} />} />
                     <Area yAxisId="left" type="monotone" dataKey="earned" stroke="hsl(43 74% 58%)" fill="url(#goldGrad)" strokeWidth={2.5} dot={{ r: 4, fill: "hsl(43 74% 58%)" }} />
                     <Area yAxisId="right" type="monotone" dataKey="students" stroke="hsl(200 80% 55%)" fill="url(#blueGrad)" strokeWidth={2} dot={{ r: 3, fill: "hsl(200 80% 55%)" }} />
                   </AreaChart>
@@ -349,7 +349,7 @@ const EmptyChart = ({ message }: { message: string }) => (
   </div>
 );
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label, currency }: any) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-xl border border-border/50 bg-background/95 backdrop-blur-sm px-4 py-3 shadow-xl">
@@ -359,7 +359,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           <span className="w-2.5 h-2.5 rounded-sm" style={{ background: p.stroke }} />
           <span className="text-muted-foreground capitalize">{p.dataKey}:</span>
           <span className="font-bold">
-            {p.dataKey === "earned" ? `${user?.profile?.currency || 'USD'} ${Number(p.value).toLocaleString()}` : p.value}
+            {p.dataKey === "earned" ? `${currency || 'USD'} ${Number(p.value).toLocaleString()}` : p.value}
           </span>
         </div>
       ))}

@@ -36,6 +36,11 @@ interface Event {
   notes: string | null;
   attendees_count: number;
   max_students: number;
+  image_url?: string;
+  photographer_name?: string;
+  photographer_avatar?: string;
+  photographer_phone?: string;
+  photographer_email?: string;
 }
 
 const schema = z.object({
@@ -162,9 +167,15 @@ const Join = () => {
           <div className="w-16 h-16 mx-auto rounded-full bg-gold/10 grid place-items-center">
             <CheckCircle2 className="w-8 h-8 text-gold" />
           </div>
-          <h1 className="font-display text-3xl font-bold">Registration Received!</h1>
+          <h1 className="font-display text-3xl font-bold">
+            Registration Received!
+          </h1>
           <p className="text-muted-foreground leading-relaxed">
-            Your registration for <span className="text-foreground font-medium">{event.event_name}</span> is pending review. We will contact you once approved.
+            Your registration for{" "}
+            <span className="text-foreground font-medium">
+              {event.event_name}
+            </span>{" "}
+            is pending review. We will contact you once approved.
           </p>
           <Link to="/" className="block">
             <Button className="w-full bg-gold hover:bg-gold/90 text-black font-semibold">
@@ -183,12 +194,14 @@ const Join = () => {
           <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 grid place-items-center">
             <Lock className="w-8 h-8 text-destructive" />
           </div>
-          <h1 className="font-display text-3xl font-bold">{isFull ? "Workshop Full" : "Registration Closed"}</h1>
+          <h1 className="font-display text-3xl font-bold">
+            {isFull ? "Workshop Full" : "Registration Closed"}
+          </h1>
           <p className="text-muted-foreground leading-relaxed">
-            {isFull 
+            {isFull
               ? `Sorry, all seats for ${event.event_name} have been taken.`
-              : `The registration window for ${event.event_name} has ended.`
-            } Please contact the organiser for more information.
+              : `The registration window for ${event.event_name} has ended.`}{" "}
+            Please contact the organiser for more information.
           </p>
           <Link to="/" className="block mt-6">
             <Button variant="outline">Go home</Button>
@@ -213,24 +226,75 @@ const Join = () => {
 
       <main className="container px-4 sm:px-6 max-w-2xl py-6 sm:py-8 space-y-4 sm:space-y-6">
         <div className="surface-gradient rounded-2xl p-5 sm:p-8 hairline shadow-card">
-          <p className="text-[10px] sm:text-xs uppercase tracking-wider text-gold mb-2">
-            You're joining
-          </p>
-          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
-            {event.event_name}
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-3 flex items-start sm:items-center gap-2">
-            <Calendar className="w-4 h-4 shrink-0 mt-0.5 sm:mt-0" />
-            {format(new Date(event.event_date), "PPPP 'at' p")}
-          </p>
-          {event.notes && (
-            <p className="text-sm text-muted-foreground mt-3">{event.notes}</p>
-          )}
-          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hairline">
-            <span className="text-sm">Fee:</span>
-            <span className="font-semibold text-gold">
-              {event.currency || 'USD'} {Number(event.price_per_head).toLocaleString()}
-            </span>
+          <div className="flex gap-6">
+            {event.image_url && (
+              <div className="w-32 sm:w-40 shrink-0 overflow-hidden rounded-xl border border-border/50 aspect-[3/4]">
+                <img
+                  src={event.image_url}
+                  alt="Workshop banner"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] sm:text-xs uppercase tracking-wider text-gold mb-2">
+                You're joining
+              </p>
+              <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
+                {event.event_name}
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground mt-3 flex items-start sm:items-center gap-2">
+                <Calendar className="w-4 h-4 shrink-0 mt-0.5 sm:mt-0" />
+                {format(new Date(event.event_date), "PPPP 'at' p")}
+              </p>
+              {event.notes && (
+                <p className="text-sm text-muted-foreground mt-3">
+                  {event.notes}
+                </p>
+              )}
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hairline">
+                <span className="text-sm">Fee:</span>
+                <span className="font-semibold text-gold">
+                  {event.currency || "USD"}{" "}
+                  {Number(event.price_per_head).toLocaleString()}
+                </span>
+              </div>
+              {event.photographer_name && (
+                <div className="mt-4 p-4 bg-secondary/50 rounded-lg">
+                  <h3 className="text-sm font-medium mb-3">
+                    Photographer Details
+                  </h3>
+                  <div className="flex items-start gap-3">
+                    {event.photographer_avatar ? (
+                      <img
+                        src={event.photographer_avatar}
+                        alt={event.photographer_name}
+                        className="w-12 h-12 rounded-full object-cover hairline"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-secondary grid place-items-center">
+                        <GraduationCap className="w-6 h-6 text-gold" />
+                      </div>
+                    )}
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium">
+                        {event.photographer_name}
+                      </p>
+                      {event.photographer_email && (
+                        <p className="text-xs text-muted-foreground">
+                          Email: {event.photographer_email}
+                        </p>
+                      )}
+                      {event.photographer_phone && (
+                        <p className="text-xs text-muted-foreground">
+                          Phone: {event.photographer_phone}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -239,7 +303,9 @@ const Join = () => {
           className="surface-gradient rounded-2xl p-5 sm:p-8 hairline shadow-card space-y-5"
         >
           <div>
-            <h2 className="font-display text-lg sm:text-xl font-semibold">Your details</h2>
+            <h2 className="font-display text-lg sm:text-xl font-semibold">
+              Your details
+            </h2>
             <p className="text-sm text-muted-foreground mt-1">
               Fill in your info and upload your payment slip image.
             </p>
@@ -247,7 +313,9 @@ const Join = () => {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="student_name">Full name <span className="text-destructive">*</span></Label>
+              <Label htmlFor="student_name">
+                Full name <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="student_name"
                 name="student_name"
@@ -256,7 +324,9 @@ const Join = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
+              <Label htmlFor="email">
+                Email <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="email"
                 name="email"
@@ -266,7 +336,9 @@ const Join = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone <span className="text-destructive">*</span></Label>
+              <Label htmlFor="phone">
+                Phone <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="phone"
                 name="phone"
@@ -288,7 +360,9 @@ const Join = () => {
           </div>
 
           <div className="space-y-2">
-            <Label>Payment slip <span className="text-destructive">*</span></Label>
+            <Label>
+              Payment slip <span className="text-destructive">*</span>
+            </Label>
             <label
               htmlFor="slip"
               className="block cursor-pointer rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-colors p-6 text-center"
