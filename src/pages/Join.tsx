@@ -486,7 +486,7 @@ const Join = () => {
         </form>
 
         <p className="text-center text-xs text-muted-foreground pb-4">
-          Powered by <span className="font-display">Workshop Manager</span>
+          Powered by <span className="font-display">Hire Artist</span>
         </p>
 
         {otherEvents.length > 0 && (
@@ -562,12 +562,9 @@ const Join = () => {
                             />
                           </div>
                         </div>
-                        <div className="flex items-center justify-between pt-1">
+                        <div className="pt-1">
                           <span className="text-xs font-semibold text-gold">
                             {event?.currency || "USD"} {Number(ev.price_per_head).toLocaleString()}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">
-                            {ev.approved_count}/{ev.max_students} paid
                           </span>
                         </div>
                       </div>

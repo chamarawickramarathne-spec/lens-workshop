@@ -63,7 +63,7 @@ const Dashboard = () => {
         price_per_head: Number(e.price_per_head),
         max_students: e.max_students,
         attendees_count: Number(e.attendees_count),
-        paid_count: Number(e.paid_count),
+        paid_count: Number(e.approved_count),
         total_collected: Number(e.total_collected),
         total_pending: Number(e.total_pending),
       }));
