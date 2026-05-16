@@ -273,9 +273,14 @@ const Join = () => {
                 </div>
               </div>
               {event.notes && (
-                <p className="text-sm text-muted-foreground mt-3">
-                  {event.notes}
-                </p>
+                <div className="mt-5 p-4 bg-secondary/30 rounded-xl border border-border/50">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Important Notes
+                  </h3>
+                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                    {event.notes}
+                  </p>
+                </div>
               )}
               <div className="mt-4 flex flex-wrap gap-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hairline">
