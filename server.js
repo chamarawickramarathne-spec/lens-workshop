@@ -27,7 +27,8 @@ const dbConfig = useProd ? {
   waitForConnections: true,
   connectionLimit: 5, // Reduced for shared hosting stability
   queueLimit: 0,
-  connectTimeout: 10000 // 10 second timeout
+  connectTimeout: 10000, // 10 second timeout
+  dateStrings: true
 } : {
   host: process.env.VITE_DB_HOST || 'localhost',
   user: process.env.VITE_DB_USER || 'root',
@@ -35,7 +36,8 @@ const dbConfig = useProd ? {
   database: process.env.VITE_DB_NAME || 'lens_workshop',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  dateStrings: true
 };
 
 const pool = mysql.createPool(dbConfig);
